@@ -42,6 +42,8 @@
 			serverSocket = ServerSocketChannel.open();
 			serverSocket.configureBlocking(false);
 			serverSocket.socket().bind(address);
+
+			// El ServerSocket no posee 'Attachment':
 			serverSocket.register(selector, SelectionKey.OP_ACCEPT);
 
 			handler.setServerSocket(serverSocket);

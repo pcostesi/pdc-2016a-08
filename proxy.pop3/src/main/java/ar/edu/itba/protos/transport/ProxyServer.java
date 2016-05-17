@@ -148,7 +148,8 @@
 
 			System.out.println("> Write");
 			/*	Ya podemos enviar el flujo de bytes recibido
-			**	hacia el host destino especificado.
+			**	hacia el host destino especificado (si hay bytes
+			**	en el buffer de salida).
 			*/
 
 			return;
