@@ -46,20 +46,6 @@
 	** Si el cliente se desconecta, se cierra su conexión y la del origin-server.
 	** Si el servidor desconecta, entonces se envía un comando -ERR al cliente y se
 	** cierran los sockets. De forma similar frente a un <timeout>.
-	**
-	** MULTIPLEXING: el <master> solo manipula buffers de bytes (ByteBuffer). Debido
-	** a esto, su trabajo solo consiste en cablear estos paquetes a sus respectivos
-	** procesadores. Para ello, envía solicitudes a un dispatcher general. En este
-	** dispatcher, los agentes se subscriben para procesar determinados eventos.
-	** Cuando un evento se dispara, el <master> envía el buffer al dispatcher, y este
-	** selecciona uno de los procesadores (basado en alguna heurística, e.g. round-robin),
-	** y activa un método de manejo (handler) en él. Se espera que este método almacene
-	** una referencia a dicho objeto para procesamiento futuro.
-	**
-	** En general, cada <worker> mantendrá una cola de buffers a procesar. Al finalizar
-	** con el procesamiento de cada buffer, lo debe reenviar al <master>, para que este
-	** realice el forwarding. En el caso del servidor de rotación, los mensajes poseen
-	** otro formato.
 	*/
 
 	public final class MainEntryPoint {

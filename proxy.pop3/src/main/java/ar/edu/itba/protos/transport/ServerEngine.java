@@ -44,7 +44,7 @@
 			serverSocket.socket().bind(address);
 
 			// El ServerSocket no posee 'Attachment':
-			serverSocket.register(selector, SelectionKey.OP_ACCEPT);
+			serverSocket.register(selector, SelectionKey.OP_ACCEPT, null);
 
 			handler.setServerSocket(serverSocket);
 		}
