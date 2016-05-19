@@ -1,8 +1,10 @@
 
-	package ar.edu.itba.protos.transport;
+	package ar.edu.itba.protos.transport.support;
 
 	import java.io.IOException;
+	import java.net.BindException;
 	import java.net.InetSocketAddress;
+	import java.net.SocketException;
 	import java.nio.channels.Channel;
 	import java.nio.channels.SelectionKey;
 	import java.nio.channels.Selector;
@@ -15,10 +17,10 @@
 	import ar.edu.itba.protos.transport.reactor.Reactor;
 
 		/**
-		** Un servidor genérico recibe conexiones entrantes en
-		** las direcciones y puertos especificados, y genera eventos
-		** de forma no-bloqueante, los cuales son despachados hacia
-		** un demultiplexor (implementado mediante un reactor).
+		* Un servidor genérico recibe conexiones entrantes en
+		* las direcciones y puertos especificados, y genera eventos
+		* de forma no-bloqueante, los cuales son despachados hacia
+		* un demultiplexor (implementado mediante un reactor).
 		*/
 
 	public final class Server {
@@ -30,7 +32,7 @@
 		private List<ServerSocketChannel> listeners = null;
 
 		// Demultiplexador de eventos generados:
-		private Reactor demultiplexor = null;
+		private final Reactor demultiplexor = Reactor.getInstance();
 
 		public Server() {
 
@@ -46,6 +48,17 @@
 		}
 
 		/*
+		** Devuelve la cantidad de 'listeners' activos en este servidor.
+		** Cada 'listener' se corresponde con una dirección IP y un puerto
+		** de escucha en la que se reciben conexiones entrantes.
+		*/
+
+		public int getListeners() {
+
+			return listeners.size();
+		}
+
+		/*
 		** Agrega una nueva dirección y puerto de escucha para este
 		** servidor. Es importante notar que el nuevo canal de escucha
 		** puede o no poseer un 'attachment'. En caso de que no posea,
@@ -54,7 +67,7 @@
 		** Devuelve 'true' si pudo agregar el canal.
 		*/
 
-		public boolean addListener(InetSocketAddress address, Object attach) {
+		public Server addListener(InetSocketAddress address, Object attach) {
 
 			try {
 
@@ -62,15 +75,23 @@
 				channel.configureBlocking(false);
 				channel.socket().bind(address);
 				channel.register(selector, SelectionKey.OP_ACCEPT, attach);
-	
+
 				// Si todo funcionó, agrego una nueva dirección a la lista:
 				listeners.add(channel);
 			}
+			catch (BindException exception) {
+
+				System.out.println(Message.CANNOT_BIND);
+			}
+			catch (SocketException exception) {
+
+				System.out.println(Message.UNRESOLVED_ADDRESS);
+			}
 			catch (IOException exception) {
 
-				return false;
+				System.out.println(Message.CANNOT_LISTEN);
 			}
-			return true;
+			return this;
 		}
 
 		/*
@@ -79,7 +100,7 @@
 		** Devuelve 'true' si pudo agregar el canal.
 		*/
 
-		public boolean addListener(String IP, int port, Object attach) {
+		public Server addListener(String IP, int port, Object attach) {
 
 			InetSocketAddress address = new InetSocketAddress(IP, port);
 			return addListener(address, attach);

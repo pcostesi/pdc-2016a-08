@@ -5,57 +5,11 @@
 	import java.net.InetSocketAddress;
 	import java.nio.ByteBuffer;
 	import java.nio.channels.SelectionKey;
-	import java.nio.channels.Selector;
-	import java.nio.channels.ServerSocketChannel;
 	import java.nio.channels.SocketChannel;
-
-	import ar.edu.itba.protos.transport.Attachment;
 
 	// Todo esto va a desaparecer!!!
 
 	public final class ProxyServer {
-
-		private ServerSocketChannel serverSocket;
-		private Selector selector;
-		private State state;
-
-		public ProxyServer(State state) {
-
-			this.state = state;
-		}
-
-		public void setSelector(Selector selector) {
-
-			this.selector = selector;
-		}
-
-		public void setServerSocket(ServerSocketChannel serverSocket) {
-
-			this.serverSocket = serverSocket;
-		}
-
-		public void onAccept(SelectionKey key) throws IOException {
-
-			System.out.println("> Accept");
-			/*	Aceptamos una conexión entrante y debemos
-			**	registrar el cliente en la base de datos.
-			*/
-
-			SocketChannel socket = serverSocket.accept();
-
-			if (socket != null) {
-
-				addSocket(socket, SelectionKey.OP_READ);
-				InetSocketAddress remote = (InetSocketAddress) socket.getRemoteAddress();
-
-				System.out.println("La conexión fue aceptada correctamente");
-				System.out.println("\t(IP, Port) = (" + remote.getHostString() + ", " + remote.getPort() + ")");
-			}
-			else {
-
-				System.out.println("No se pudo aceptar la conexión entrante");
-			}
-		}
 
 		public void onConnect(SelectionKey key) throws IOException {
 
@@ -122,7 +76,7 @@
 
 					// Una vez que se pueda determinar el host destino...
 					SocketChannel socket = SocketChannel.open();
-					SelectionKey outboundKey = addSocket(socket, SelectionKey.OP_CONNECT);
+					SelectionKey outboundKey = null;//addSocket(socket, SelectionKey.OP_CONNECT);
 					if (socket.connect(address)) {
 
 						System.out.println("Conexión remota instantánea!");
@@ -138,22 +92,5 @@
 					System.out.println("Intentando acceder al host destino");
 				}
 			}
-		}
-
-		public void onWrite(SelectionKey key) throws IOException {
-
-			System.out.println("> Write");
-			/*	Ya podemos enviar el flujo de bytes recibido
-			**	hacia el host destino especificado (si hay bytes
-			**	en el buffer de salida).
-			*/
-
-			return;
-		}
-
-		public SelectionKey addSocket(SocketChannel socket, int key) throws IOException {
-
-			socket.configureBlocking(false);
-			return socket.register(selector, key, new Attachment(socket, state.getBufferSize()));
 		}
 	}

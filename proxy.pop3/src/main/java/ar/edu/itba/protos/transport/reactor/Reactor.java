@@ -2,31 +2,27 @@
 	package ar.edu.itba.protos.transport.reactor;
 
 	import java.nio.channels.SelectionKey;
-	import java.nio.channels.Selector;
 	import java.util.HashMap;
 	import java.util.HashSet;
 	import java.util.Map;
 	import java.util.Set;
 
 		/**
-		** Implementación del patrón Reactor. Este sistema permite
-		** forwardear eventos hacia distintas entidades desacopladas
-		** de forma eficiente y genérica. En este caso, los eventos
-		** tratables se asocian a estados de canales de comunicación.
+		* Implementación del patrón Reactor. Este sistema permite
+		* forwardear eventos hacia distintas entidades desacopladas
+		* de forma eficiente y genérica. En este caso, los eventos
+		* tratables se asocian a estados de canales de comunicación.
 		*/
 
 	public final class Reactor {
 
+		// Única instancia (singleton):
+		private static final Reactor instance = new Reactor();
+
 		// Mapa de entidades que pueden procesar eventos:
 		private Map<Event, Set<Handler>> handlers = null;
 
-		// El generador de eventos (creo que no va en este lugar):
-		// private Selector selector = null;
-
-		public Reactor(Selector selector) {
-
-			// El reactor opera sobre estos canales (tampoco acá):
-			// this.selector = selector;
+		private Reactor() {
 
 			// La estructura de búsqueda de eventos es un mapa:
 			handlers = new HashMap<Event, Set<Handler>>();
@@ -36,6 +32,15 @@
 
 				handlers.put(event, new HashSet<Handler>());
 			}
+		}
+
+		/*
+		** Devuelve la única instancia de esta clase.
+		*/
+
+		public static Reactor getInstance() {
+
+			return instance;
 		}
 
 		/*
@@ -78,13 +83,14 @@
 		** este método no tiene efecto.
 		*/
 
-		public void add(Handler handler, Event event) {
+		public Reactor add(Handler handler, Event event) {
 
 			Set<Handler> set = handlers.get(event);
 			if (set != null) {
 
 				set.add(handler);
 			}
+			return this;
 		}
 
 		/*
@@ -94,7 +100,7 @@
 		** representa un evento en particular (ver Event).
 		*/
 
-		public void add(Handler handler, int options) {
+		public Reactor add(Handler handler, int options) {
 
 			for (Event event : Event.values()) {
 
@@ -103,34 +109,21 @@
 					add(handler, event);
 				}
 			}
+			return this;
 		}
 
 		/*
-		** Cancelar la subscripción de un manejador sobre
-		** cierto evento. El manejador ya no recibirá eventos
-		** de este tipo.
+		** Este método permite desubscribir todos los 'handlers'
+		** lo que permite desconectar todos los componentes que,
+		** gracias al reactor, se encontraban relacionados.
 		*/
 
-		public void remove(Handler handler, Event event) {
-
-			Set<Handler> set = handlers.get(event);
-			if (set != null) {
-
-				set.remove(handler);
-			}
-		}
-
-		/*
-		** Cancela la subscripción de un manejador de todos
-		** los eventos en los que esté registrado. El manejador
-		** ya no recibirá eventos de ningún tipo.
-		*/
-
-		public void remove(Handler handler) {
+		public void unplug() {
 
 			for (Event event : Event.values()) {
 
-				remove(handler, event);
+				Set<Handler> set = handlers.get(event);
+				if (set != null) set.clear();
 			}
 		}
 
@@ -153,5 +146,36 @@
 					}
 				}
 			}
+		}
+
+		/*
+		** Cancelar la subscripción de un manejador sobre
+		** cierto evento. El manejador ya no recibirá eventos
+		** de este tipo.
+		*/
+
+		public Reactor remove(Handler handler, Event event) {
+
+			Set<Handler> set = handlers.get(event);
+			if (set != null) {
+
+				set.remove(handler);
+			}
+			return this;
+		}
+
+		/*
+		** Cancela la subscripción de un manejador de todos
+		** los eventos en los que esté registrado. El manejador
+		** ya no recibirá eventos de ningún tipo.
+		*/
+
+		public Reactor remove(Handler handler) {
+
+			for (Event event : Event.values()) {
+
+				remove(handler, event);
+			}
+			return this;
 		}
 	}

@@ -2,10 +2,10 @@
 	package ar.edu.itba.protos.transport.support;
 
 		/**
-		** Más que una clase que provee comportamiento, su función
-		** es la de actuar como contenedor de la configuración actual
-		** del servidor, en general. Algunos de estos parámetros
-		** pueden modificarse en tiempo de ejecución.
+		* Más que una clase que provee comportamiento, su función
+		* es la de actuar como contenedor de la configuración actual
+		* del servidor, en general. Algunos de estos parámetros
+		* pueden modificarse en tiempo de ejecución.
 		*/
 
 	public final class State {
