@@ -8,14 +8,14 @@
 	import java.util.Map;
 	import java.util.Set;
 
-	/*
-	** Implementación del patrón Reactor. Este sistema permite
-	** forwardear eventos hacia distintas entidades desacopladas
-	** de forma eficiente y genérica. En este caso, los eventos
-	** tratables se asocian a estados de canales de comunicación.
-	*/
+		/**
+		** Implementación del patrón Reactor. Este sistema permite
+		** forwardear eventos hacia distintas entidades desacopladas
+		** de forma eficiente y genérica. En este caso, los eventos
+		** tratables se asocian a estados de canales de comunicación.
+		*/
 
-	public class Reactor {
+	public final class Reactor {
 
 		// Mapa de entidades que pueden procesar eventos:
 		private Map<Event, Set<Handler>> handlers = null;

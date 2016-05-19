@@ -4,6 +4,12 @@
 	import java.nio.ByteBuffer;
 	import java.nio.channels.SocketChannel;
 
+		/**
+		** Para cada socket creado (a excepción de los sockets de
+		** escucha), se instancia un objeto de esta clase, el cual
+		** mantiene la información asociada a ese canal de información.
+		*/
+
 	public final class Attachment {
 
 		private ByteBuffer buffer;

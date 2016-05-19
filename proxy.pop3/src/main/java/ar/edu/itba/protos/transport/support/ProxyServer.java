@@ -1,5 +1,5 @@
 
-	package ar.edu.itba.protos.transport;
+	package ar.edu.itba.protos.transport.support;
 
 	import java.io.IOException;
 	import java.net.InetSocketAddress;
@@ -9,23 +9,19 @@
 	import java.nio.channels.ServerSocketChannel;
 	import java.nio.channels.SocketChannel;
 
-	import ar.edu.itba.protos.transport.state.NetworkState;
-	import ar.edu.itba.protos.transport.state.ProxyState;
+	import ar.edu.itba.protos.transport.Attachment;
 
-	public final class ProxyServer implements NetworkHandler {
+	// Todo esto va a desaparecer!!!
+
+	public final class ProxyServer {
 
 		private ServerSocketChannel serverSocket;
 		private Selector selector;
-		private ProxyState state;
+		private State state;
 
-		public ProxyServer(ProxyState state) {
+		public ProxyServer(State state) {
 
 			this.state = state;
-		}
-
-		public NetworkState getState() {
-
-			return state;
 		}
 
 		public void setSelector(Selector selector) {

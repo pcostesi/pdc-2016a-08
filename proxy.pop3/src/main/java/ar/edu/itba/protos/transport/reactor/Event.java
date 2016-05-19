@@ -3,13 +3,13 @@
 
 	import java.nio.channels.SelectionKey;
 
-	/*
-	** Representa el conjunto de eventos posibles, que un
-	** reactor debe demultiplexar. Debido a que la clase
-	** SelectionKey declara los eventos utilizando constantes
-	** individuales, es necesario construir este Enum para
-	** recorrerlos de forma sistemática.
-	*/
+		/**
+		** Representa el conjunto de eventos posibles, que un
+		** reactor debe demultiplexar. Debido a que la clase
+		** 'SelectionKey' declara los eventos utilizando constantes
+		** individuales, es necesario construir este 'Enum' para
+		** recorrerlos de forma sistemática.
+		*/
 
 	public enum Event {
 

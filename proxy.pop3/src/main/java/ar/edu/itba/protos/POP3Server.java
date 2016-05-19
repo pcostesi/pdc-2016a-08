@@ -4,9 +4,7 @@
 	import java.io.IOException;
 	import java.net.BindException;
 
-	import ar.edu.itba.protos.transport.ServerEngine;
-	import ar.edu.itba.protos.transport.ProxyServer;
-	import ar.edu.itba.protos.transport.state.ProxyState;
+	import ar.edu.itba.protos.transport.Server;
 
 	/*
 	** [transport] -> "Capa de Transporte":
@@ -48,22 +46,36 @@
 	** cierran los sockets. De forma similar frente a un <timeout>.
 	*/
 
-	public final class MainEntryPoint {
+		/**
+		** Ciclo principal de ejecución (master thread). Su función es
+		** levantar el servidor en las direcciones y puertos especificados
+		** y comenzar a recibir conexiones entrantes, las cuales serán
+		** despachadas entre los 'workers' disponibles.
+		*/
+
+	public final class POP3Server {
 
 		public static void main(String [] args) {
 
-			System.out.println("Proxy Server");
+			System.out.println("POP-3 Proxy Server");
 
-			ServerEngine engine = new ServerEngine(new ProxyServer(new ProxyState()));
+			// Se instancia un nuevo servidor:
+			Server pop3 = new Server();
+
+			// Se intenta aplicar 'binding' en la dirección especficada:
+			if (!pop3.addListener("0.0.0.0", 110, null)) {
+
+				System.out.println("No se pudo agregar el 'listener'.");
+			}
+
 			try {
 
-				engine.raise();
-				engine.dispatch();
-				engine.shutdown();
+				pop3.dispatch();
+				pop3.shutdown();
 			}
 			catch (BindException exception) {
 
-				System.out.println("La dirección especificada ya se está usando");
+				System.out.println("La dirección especificada ya se está usando.");
 			}
 			catch (IOException exception) {
 
