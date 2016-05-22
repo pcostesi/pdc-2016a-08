@@ -155,14 +155,15 @@
 
 			Set<SelectionKey> keys = selector.keys();
 
+			// Cierra los canales:
 			for (SelectionKey key : keys) {
 
-				/**/System.out.println(key);
 				key.cancel();
 				Channel channel = key.channel();
 				if (channel.isOpen()) channel.close();
 			}
 
+			// Cierra los 'listeners':
 			for (ServerSocketChannel listener : listeners) {
 
 				// En teoría, no es necesario:
@@ -170,6 +171,7 @@
 			}
 			listeners.clear();
 
+			// Cierra el selector:
 			if (selector.isOpen()) selector.close();
 		}
 	}

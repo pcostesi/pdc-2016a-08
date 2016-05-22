@@ -7,6 +7,8 @@
 	import ar.edu.itba.protos.transport.handler.ReadHandler;
 	import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.reactor.Reactor;
+	import ar.edu.itba.protos.transport.support.AttachmentFactory;
+	import ar.edu.itba.protos.transport.support.BasicAttachmentFactory;
 	import ar.edu.itba.protos.transport.support.Message;
 	import ar.edu.itba.protos.transport.support.Server;
 
@@ -25,21 +27,22 @@
 
 		public static void main(String [] arguments) {
 
-			/**/System.out.println("POP-3 Proxy Server");
+			// Fábrica de 'attachments' estáticos de 4 Kb.:
+			final AttachmentFactory factory = new BasicAttachmentFactory();
 
 			/*
 			** Se instalan los manejadores (Handlers) en el
 			** demultiplexador de eventos global:
 			*/
 			final Reactor demultiplexor = Reactor.getInstance()
-				.add(new AcceptHandler(), Event.ACCEPT)
-				.add(new ReadHandler(), Event.READ);
+				.add(new AcceptHandler(factory), Event.ACCEPT)
+				.add(new ReadHandler(null), Event.READ);
 
 			/*
 			** Se instancia un nuevo servidor y se aplica
 			** un 'binding' en cada dirección especificada:
 			*/
-			Server pop3 = new Server()
+			final Server pop3 = new Server()
 				.addListener("0.0.0.0", 110, null)
 				.addListener("0.0.0.0", 666, null);
 
@@ -54,13 +57,10 @@
 			}
 			catch (IOException exception) {
 
-				/**/exception.printStackTrace();
 				System.out.println(Message.CANNOT_RAISE);
 			}
 
 			// Quitar todos los manejadores del demultiplexor global:
 			demultiplexor.unplug();
-
-			/**/System.out.println("End.");
 		}
 	}

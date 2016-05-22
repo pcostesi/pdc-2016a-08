@@ -9,6 +9,7 @@
 
 	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
+	import ar.edu.itba.protos.transport.support.AttachmentFactory;
 	import ar.edu.itba.protos.transport.support.Message;
 
 		/**
@@ -21,9 +22,23 @@
 
 	public final class AcceptHandler implements Handler {
 
-		public AcceptHandler() {
+		// Este objeto permite instalar 'attachments':
+		private AttachmentFactory factory = null;
 
-			return;
+		public AcceptHandler(AttachmentFactory factory) {
+
+			if (factory != null) this.factory = factory;
+			else {
+
+				// En caso de que no exista una fábrica:
+				this.factory = new AttachmentFactory() {
+
+					public Attachment create(SocketChannel socket) {
+
+						return null;
+					}
+				};
+			}
 		}
 
 		/*
@@ -44,12 +59,12 @@
 				if (socket != null) {
 
 					// Registro el nuevo cliente y sus datos:
+					InetSocketAddress remote = getRemote(socket);
 					socket.configureBlocking(false);
 					socket.register(
-							key.selector(),
-							SelectionKey.OP_READ,
-							new Attachment(socket, 4096));			// Más genérico!!!
-					InetSocketAddress remote = getRemote(socket);
+						key.selector(),
+						SelectionKey.OP_READ,
+						factory.create(socket));
 
 					/**/System.out.println(
 							"La conexión fue aceptada correctamente");
@@ -61,7 +76,6 @@
 			}
 			catch (IOException exception) {
 
-				exception.printStackTrace();
 				System.out.println(Message.UNKNOWN);
 			}
 		}
