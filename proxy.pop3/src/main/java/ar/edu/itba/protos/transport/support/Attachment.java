@@ -35,14 +35,34 @@
 
 		/*
 		** Devuelve el buffer interno que se usa para realizar IO
-		** sobre el stream de bytes asignado (el socket). Es necesario
+		** sobre el stream de bytes de entrada (inbound). Es necesario
 		** que el mismo se acceda a través de un método debido a que de
 		** esta forma se desacopla el mecanismo por el cual se obtiene
 		** dicho buffer (el tamaño del buffer podría variar entre cada
-		** llamada a este 'getter').
+		** llamada a este 'getter'). Este buffer se utiliza durante una
+		** lectura en el canal asociado.
 		*/
 
-		public abstract ByteBuffer getBuffer();
+		public abstract ByteBuffer getInboundBuffer();
+
+		/*
+		** En este caso, se devuelve el buffer de salida del flujo de
+		** datos (outbound). El buffer de salida es el que se utiliza
+		** durante una escritura en el canal asociado.
+		*/
+
+		public abstract ByteBuffer getOutboundBuffer();
+
+		/*
+		** Devuelve el procesador o 'interceptor' del flujo de bytes
+		** de entrada (inbound). Este método se especifica como 'abstract'
+		** (en lugar de definirlo concretamente para esta clase), debido
+		** a que permite más libertad en el diseño de este componente, por
+		** ejemplo, permitiendo que el 'attachment' sea al mismo tiempo
+		** quien procese la información (es decir, que sea un interceptor).
+		*/
+
+		public abstract Interceptor getInterceptor();
 
 		/*
 		** Devuelve el hostname del stream o su dirección IP. Este
@@ -81,6 +101,28 @@
 		public SocketChannel getSocket() {
 
 			return socket;
+		}
+
+		/*
+		** Retorna 'true' si existe un flujo de bytes
+		** en el buffer de entrada, el cual debe ser procesado,
+		** antes de ser enviado.
+		*/
+
+		public boolean hasInboundData() {
+
+			return getInboundBuffer().hasRemaining();
+		}
+
+		/*
+		** Retorna 'true' si existe un flujo de bytes
+		** en el buffer de salida, el cual debe ser enviado,
+		** hacia el host remoto.
+		*/
+
+		public boolean hasOutboundData() {
+
+			return getOutboundBuffer().hasRemaining();
 		}
 
 		/*

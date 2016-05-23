@@ -22,25 +22,6 @@
 
 	public final class AcceptHandler implements Handler {
 
-		// Este objeto permite instalar 'attachments':
-		private AttachmentFactory factory = null;
-
-		public AcceptHandler(AttachmentFactory factory) {
-
-			if (factory != null) this.factory = factory;
-			else {
-
-				// En caso de que no exista una fábrica:
-				this.factory = new AttachmentFactory() {
-
-					public Attachment create(SocketChannel socket) {
-
-						return null;
-					}
-				};
-			}
-		}
-
 		/*
 		** Procesa el evento para el cual está subscripto. En este
 		** caso, el evento es de aceptación.
@@ -53,19 +34,21 @@
 			try {
 
 				// Establecemos la nueva conexión entrante:
+				AttachmentFactory factory = getFactory(key);
 				ServerSocketChannel server = getServer(key);
 				SocketChannel socket = server.accept();
 
 				if (socket != null) {
 
-					// Registro el nuevo cliente y sus datos:
-					InetSocketAddress remote = getRemote(socket);
-					socket.configureBlocking(false);
-					socket.register(
-						key.selector(),
-						SelectionKey.OP_READ,
-						factory.create(socket));
+					// Es posible que el 'greeting-banner' esté disponible:
+					Attachment attachment = factory.create(socket);
+					int options = getOptions(attachment);
 
+					// Registro el nuevo cliente y sus datos:
+					socket.configureBlocking(false);
+					socket.register(key.selector(), options, attachment);
+
+					/**/InetSocketAddress remote = getRemote(socket);
 					/**/System.out.println(
 							"La conexión fue aceptada correctamente");
 					/**/System.out.println(
@@ -78,6 +61,35 @@
 
 				System.out.println(Message.UNKNOWN);
 			}
+		}
+
+		/*
+		** Permite obtener la fábrica almacenada en el canal
+		** asociado al ServerSocket que aceptó la conexión.
+		*/
+
+		private AttachmentFactory getFactory(SelectionKey key) {
+
+			AttachmentFactory factory = (AttachmentFactory) key.attachment();
+			if (factory != null) return factory;
+			else return AttachmentFactory.DEFAULT;
+		}
+
+		/*
+		** Determina los eventos iniciales a los que este canal
+		** debe responder en función del estado por defecto del
+		** 'attachment', el cual es obtenido inmediatamente luego
+		** crear el mismo a través de una fábrica (AttachmentFactory).
+		*/
+
+		private int getOptions(Attachment attachment) {
+
+			int options = SelectionKey.OP_READ;
+			if (attachment != null && attachment.hasOutboundData()) {
+
+				options |= SelectionKey.OP_WRITE;
+			}
+			return options;
 		}
 
 		/*

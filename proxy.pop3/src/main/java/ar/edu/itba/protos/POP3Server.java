@@ -4,7 +4,9 @@
 	import java.io.IOException;
 
 	import ar.edu.itba.protos.transport.handler.AcceptHandler;
+	import ar.edu.itba.protos.transport.handler.ConnectHandler;
 	import ar.edu.itba.protos.transport.handler.ReadHandler;
+	import ar.edu.itba.protos.transport.handler.WriteHandler;
 	import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.reactor.Reactor;
 	import ar.edu.itba.protos.transport.support.AttachmentFactory;
@@ -27,7 +29,11 @@
 
 		public static void main(String [] arguments) {
 
-			// Fábrica de 'attachments' estáticos de 4 Kb.:
+			/*
+			** Fábrica de 'attachments' estáticos de 4 Kb. Cada
+			** servidor puede tener una fábrica distinta en cada
+			** puerto de escucha (es decir, en cada 'listener'):
+			*/
 			final AttachmentFactory factory = new BasicAttachmentFactory();
 
 			/*
@@ -35,15 +41,17 @@
 			** demultiplexador de eventos global:
 			*/
 			final Reactor demultiplexor = Reactor.getInstance()
-				.add(new AcceptHandler(factory), Event.ACCEPT)
-				.add(new ReadHandler(null), Event.READ);
+				.add(new AcceptHandler(), Event.ACCEPT)
+				.add(new ReadHandler(), Event.READ)
+				.add(new WriteHandler(), Event.WRITE)
+				.add(new ConnectHandler(), Event.CONNECT);
 
 			/*
 			** Se instancia un nuevo servidor y se aplica
 			** un 'binding' en cada dirección especificada:
 			*/
 			final Server pop3 = new Server()
-				.addListener("0.0.0.0", 110, null)
+				.addListener("0.0.0.0", 110, factory)
 				.addListener("0.0.0.0", 666, null);
 
 			try {

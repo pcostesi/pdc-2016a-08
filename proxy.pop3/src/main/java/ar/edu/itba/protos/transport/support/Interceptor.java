@@ -28,4 +28,17 @@
 		*/
 
 		public void consume(ByteBuffer buffer);
+
+		/*
+		** Interceptor por defecto. Recibe un buffer, pero no
+		** hace nada con él.
+		*/
+
+		public static final Interceptor DEFAULT = new Interceptor() {
+
+			public void consume(ByteBuffer buffer) {
+
+				return;
+			}
+		};
 	}

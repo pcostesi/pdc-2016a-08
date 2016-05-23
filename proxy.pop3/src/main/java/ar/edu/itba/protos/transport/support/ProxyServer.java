@@ -48,7 +48,7 @@
 
 				System.out.println("Ya se puede leer del buffer");
 
-				ByteBuffer buffer = attachment.getBuffer();
+				ByteBuffer buffer = attachment.getInboundBuffer();
 				buffer.clear();
 				if (-1 < attachment.getSocket().read(buffer)) {
 

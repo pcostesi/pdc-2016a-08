@@ -13,4 +13,18 @@
 	public interface AttachmentFactory {
 
 		public Attachment create(SocketChannel socket);
+
+		/*
+		** Fábrica por defecto. Simplemente devuelve un
+		** 'attachment' nulo.
+		*/
+
+		public static final AttachmentFactory DEFAULT
+			= new AttachmentFactory() {
+
+				public Attachment create(SocketChannel socket) {
+	
+					return null;
+				}
+			};
 	}
