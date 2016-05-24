@@ -4,34 +4,22 @@
 	import java.io.IOException;
 	import java.net.InetSocketAddress;
 	import java.nio.ByteBuffer;
+	import java.nio.channels.SelectionKey;
 	import java.nio.channels.SocketChannel;
 
 		/**
-		* Para cada socket creado (a excepción de los sockets de
+		* Para cada canal creado (a excepción de los sockets de
 		* escucha), se instancia un objeto de esta clase, el cual
 		* mantiene la información asociada a ese canal de información.
 		*/
 
 	public abstract class Attachment {
 
-		// Dirección IP y puerto del stream:
-		protected InetSocketAddress address = null;
+		// Canal asociado a este 'attachment':
+		protected SelectionKey downstream = null;
 
-		// Stream de datos asignado a este 'attachment':
-		protected SocketChannel socket = null;
-
-		public Attachment(SocketChannel socket) {
-
-			this.socket = socket;
-			if (socket != null) {
-
-				try {
-
-					address = (InetSocketAddress) socket.getRemoteAddress();
-				}
-				catch (IOException exception) {}
-			}
-		}
+		// Canal asociado al servidor destino:
+		protected SelectionKey upstream = null;
 
 		/*
 		** Devuelve el buffer interno que se usa para realizar IO
@@ -65,6 +53,42 @@
 		public abstract Interceptor getInterceptor();
 
 		/*
+		** Devuelve la dirección asociada a este canal, o 'null'
+		** si no puede obtenerla.
+		*/
+
+		public InetSocketAddress getAddress() {
+
+			try {
+
+				SocketChannel socket = getSocket();
+				return (InetSocketAddress) socket.getRemoteAddress();
+			}
+			catch (IOException exception) {
+
+				return null;
+			}
+		}
+
+		/*
+		** Devuelve la clave de selección de este mismo canal.
+		*/
+
+		public SelectionKey getDownstream() {
+
+			return downstream;
+		}
+
+		/*
+		** Devuelve la clave del servidor destino (upstream).
+		*/
+
+		public SelectionKey getUpstream() {
+
+			return upstream;
+		}
+
+		/*
 		** Devuelve el hostname del stream o su dirección IP. Este
 		** método no aplica ningún tipo de 'reverse-lookup', y por lo
 		** tanto es más eficiente. Si la dirección es inválida devuelve
@@ -73,6 +97,7 @@
 
 		public String getHost() {
 
+			InetSocketAddress address = getAddress();
 			if (address != null) {
 
 				return address.getHostString();
@@ -87,6 +112,7 @@
 
 		public int getPort() {
 
+			InetSocketAddress address = getAddress();
 			if (address != null) {
 
 				return address.getPort();
@@ -95,12 +121,32 @@
 		}
 
 		/*
-		** Devuelve el stream de datos.
+		** Devuelve el stream de datos. Debido a que este canal
+		** se representa por el 'downstream', el socket se debe
+		** extraer de este flujo.
 		*/
 
 		public SocketChannel getSocket() {
 
-			return socket;
+			return (SocketChannel) downstream.channel();
+		}
+
+		/*
+		** Setea la clave de selección de este mismo canal.
+		*/
+
+		public void setDownstream(SelectionKey downstream) {
+
+			this.downstream = downstream;
+		}
+
+		/*
+		** Setea la clave del servidor destino (upstream).
+		*/
+
+		public void setUpstream(SelectionKey upstream) {
+
+			this.upstream = upstream;
 		}
 
 		/*
@@ -133,6 +179,7 @@
 
 		public boolean isOnline() {
 
+			SocketChannel socket = getSocket();
 			return (socket != null) && socket.isConnected();
 		}
 	}

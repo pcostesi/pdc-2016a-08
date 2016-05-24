@@ -34,24 +34,28 @@
 			try {
 
 				// Establecemos la nueva conexión entrante:
-				AttachmentFactory factory = getFactory(key);
-				ServerSocketChannel server = getServer(key);
-				SocketChannel socket = server.accept();
+				SocketChannel socket = getServer(key).accept();
 
 				if (socket != null) {
 
-					// Es posible que el 'greeting-banner' esté disponible:
-					Attachment attachment = factory.create(socket);
-					int options = getOptions(attachment);
+					// Fabrico un nuevo 'attachment':
+					Attachment attachment = getFactory(key).create();
 
 					// Registro el nuevo cliente y sus datos:
-					socket.configureBlocking(false);
-					socket.register(key.selector(), options, attachment);
+					SelectionKey downstream = socket
+						.configureBlocking(false)
+						.register(
+							key.selector(),
+							getOptions(attachment),
+							attachment);
+
+					// Especifico el flujo que identifica este canal:
+					attachment.setDownstream(downstream);
 
 					/**/InetSocketAddress remote = getRemote(socket);
-					/**/System.out.println(
+					System.out.println(
 							"La conexión fue aceptada correctamente");
-					/**/System.out.println(
+					System.out.println(
 							"\t(IP, Port) = (" + remote.getHostString() +
 							", " + remote.getPort() + ")");
 				}

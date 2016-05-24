@@ -2,7 +2,6 @@
 	package ar.edu.itba.protos.transport.support;
 
 	import java.nio.ByteBuffer;
-	import java.nio.channels.SocketChannel;
 
 		/**
 		* Esta implementación de 'AttachmentFactory', genera
@@ -16,14 +15,9 @@
 		// Tamaño máximo del buffer (capacidad):
 		public static final int BUFFER_SIZE = 4096;
 
-		public BasicAttachmentFactory() {
+		public Attachment create() {
 
-			return;
-		}
-
-		public Attachment create(SocketChannel socket) {
-
-			return new Attachment(socket) {
+			return new Attachment() {
 
 				// El buffer de entrada (lectura):
 				private ByteBuffer inbound = ByteBuffer.allocate(BUFFER_SIZE);

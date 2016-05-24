@@ -32,12 +32,16 @@
 
 			/**/System.out.println("> Read (" + key + ")");
 
-			// Variables utilizadas, por simplicidad:
 			Attachment attachment = (Attachment) key.attachment();
-			SocketChannel socket = attachment.getSocket();
 			ByteBuffer buffer = attachment.getInboundBuffer();
+			SocketChannel socket = attachment.getSocket();
 
 			try {
+
+				// La terna debería ser (0, C, C):
+				/**/System.out.println("\tPos: " + buffer.position());
+				/**/System.out.println("\tLim: " + buffer.limit());
+				/**/System.out.println("\tRem: " + buffer.remaining());
 
 				if (BROKEN_PIPE < socket.read(buffer)) {
 
@@ -49,9 +53,17 @@
 					Interceptor interceptor = getInterceptor(attachment);
 					interceptor.consume(buffer);
 
-					// Si hay información para enviar, habilito escritura
-					// (esto no está bien hecho!!!):
-					if (buffer.hasRemaining()) enableWrite(key);
+					// La terna debería ser (0, n, n):
+					/**/System.out.println("\tPos: " + buffer.position());
+					/**/System.out.println("\tLim: " + buffer.limit());
+					/**/System.out.println("\tRem: " + buffer.remaining());
+
+					// Si hay información para enviar, abro el 'upstream':
+					if (attachment.hasInboundData()) {
+
+						SelectionKey upstream = attachment.getUpstream();
+						enableWrite(upstream);
+					}
 				}
 				else {
 
@@ -61,6 +73,7 @@
 
 					// De que lado se cerró? Debemos cerrar el otro extremo!!!
 					// Es decir, el origin-server, sino, hay que reportar error.
+					// Quizás sea mejor crear un método especial para desconexiones.
 				}
 			}
 			catch (IOException exception) {
@@ -70,15 +83,18 @@
 		}
 
 		/*
-		** Habilita la escritura en el canal especificado. Es
-		** importante notar que el resto de opciones permanece
-		** sin modificación. Si el canal ya estaba habilitado
-		** para escritura, este método no produce cambios.
+		** Habilita la operación de escritura en el canal especificado
+		** lo que permite enviar un flujo de bytes hacia un host
+		** destino (outbound).
 		*/
 
-		private void enableWrite(SelectionKey key) {
+		private void enableWrite(SelectionKey stream) {
 
-			key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
+			if (stream != null) {
+
+				int options = stream.interestOps();
+				stream.interestOps(options | SelectionKey.OP_WRITE);
+			}
 		}
 
 		/*

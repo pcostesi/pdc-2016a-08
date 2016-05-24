@@ -1,8 +1,6 @@
 
 	package ar.edu.itba.protos.transport.support;
 
-	import java.nio.channels.SocketChannel;
-
 		/**
 		* Esta interfaz permite instalar un 'attachment'
 		* dentro de un canal especificado de forma genérica,
@@ -12,7 +10,7 @@
 
 	public interface AttachmentFactory {
 
-		public Attachment create(SocketChannel socket);
+		public Attachment create();
 
 		/*
 		** Fábrica por defecto. Simplemente devuelve un
@@ -22,7 +20,7 @@
 		public static final AttachmentFactory DEFAULT
 			= new AttachmentFactory() {
 
-				public Attachment create(SocketChannel socket) {
+				public Attachment create() {
 	
 					return null;
 				}
