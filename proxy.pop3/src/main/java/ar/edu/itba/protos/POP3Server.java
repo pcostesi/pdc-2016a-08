@@ -51,8 +51,8 @@
 			** un 'binding' en cada dirección especificada:
 			*/
 			final Server pop3 = new Server()
-				.addListener("0.0.0.0", 110, factory)
-				.addListener("0.0.0.0", 666, null);
+				.addListener("0.0.0.0", 1100, factory)
+				.addListener("0.0.0.0", 6660, null);
 
 			try {
 

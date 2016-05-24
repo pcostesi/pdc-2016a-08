@@ -7,6 +7,8 @@
 	import java.nio.channels.SelectionKey;
 	import java.nio.channels.SocketChannel;
 
+	import ar.edu.itba.protos.transport.reactor.Event;
+
 		/**
 		* Para cada canal creado (a excepción de los sockets de
 		* escucha), se instancia un objeto de esta clase, el cual
@@ -51,6 +53,15 @@
 		*/
 
 		public abstract Interceptor getInterceptor();
+
+		/*
+		** Este método es llamado cada vez que el canal asociado a este
+		** 'attachment' se cierra y permite aplicar un post-proceso
+		** adicional (por ejemplo, llenar el buffer de salida con algún
+		** mensaje de error).
+		*/
+
+		public abstract void onUnplug(Event event);
 
 		/*
 		** Devuelve la dirección asociada a este canal, o 'null'

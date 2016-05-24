@@ -3,6 +3,8 @@
 
 	import java.nio.ByteBuffer;
 
+	import ar.edu.itba.protos.transport.reactor.Event;
+
 		/**
 		* Esta implementación de 'AttachmentFactory', genera
 		* instancias que poseen un buffer de tamaño fijo. En
@@ -41,6 +43,12 @@
 				public Interceptor getInterceptor() {
 
 					return Interceptor.DEFAULT;
+				}
+
+				@Override
+				public void onUnplug(Event event) {
+
+					System.out.println("> onUnplug");
 				}
 			};
 		}

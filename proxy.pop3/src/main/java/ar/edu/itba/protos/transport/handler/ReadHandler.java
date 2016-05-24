@@ -6,6 +6,7 @@
 	import java.nio.channels.SelectionKey;
 	import java.nio.channels.SocketChannel;
 
+	import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
 	import ar.edu.itba.protos.transport.support.Interceptor;
@@ -57,23 +58,22 @@
 					/**/System.out.println("\tPos: " + buffer.position());
 					/**/System.out.println("\tLim: " + buffer.limit());
 					/**/System.out.println("\tRem: " + buffer.remaining());
-
-					// Si hay información para enviar, abro el 'upstream':
-					if (attachment.hasInboundData()) {
-
-						SelectionKey upstream = attachment.getUpstream();
-						enableWrite(upstream);
-					}
 				}
 				else {
 
-					key.cancel();
-					socket.close();
 					/**/System.out.println("El host remoto se ha desconectado");
 
-					// De que lado se cerró? Debemos cerrar el otro extremo!!!
-					// Es decir, el origin-server, sino, hay que reportar error.
-					// Quizás sea mejor crear un método especial para desconexiones.
+					key.cancel();
+					socket.close();
+					attachment.setDownstream(null);
+					attachment.onUnplug(Event.READ);
+				}
+
+				// Si hay información para enviar, abro el 'upstream':
+				if (attachment.hasInboundData()) {
+
+					SelectionKey upstream = attachment.getUpstream();
+					enableWrite(upstream);
 				}
 			}
 			catch (IOException exception) {
