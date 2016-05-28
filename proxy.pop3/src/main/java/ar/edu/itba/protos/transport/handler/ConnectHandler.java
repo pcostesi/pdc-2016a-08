@@ -15,13 +15,15 @@
 
 	public final class ConnectHandler implements Handler {
 
-		public ConnectHandler() {
-
-			return;
-		}
+		/*
+		** Procesa el evento para el cual está subscripto. En este
+		** caso, el evento es de conexión saliente establecida.
+		*/
 
 		public void handle(SelectionKey key) {
 
-			/**/System.out.println("> Write (" + key + ")");
+			/**/System.out.println("> Connect (" + key + ")");
+
+			/**/while (true);
 		}
 	}

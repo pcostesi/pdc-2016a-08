@@ -76,7 +76,7 @@
 				channel.socket().bind(address);
 				channel.register(selector, SelectionKey.OP_ACCEPT, attach);
 
-				// Si todo funcionó, agrego una nueva dirección a la lista:
+				// Si todo funcionó, agrego el nuevo canal:
 				listeners.add(channel);
 			}
 			catch (BindException exception) {
@@ -127,7 +127,7 @@
 					while (iterator.hasNext()) {
 
 						SelectionKey key = iterator.next();
-						System.out.println("Select: " + key);
+						System.out.println("> Select: " + key);
 
 						// Solicito que un manejador resuelva el evento:
 						demultiplexor.dispatch(key);

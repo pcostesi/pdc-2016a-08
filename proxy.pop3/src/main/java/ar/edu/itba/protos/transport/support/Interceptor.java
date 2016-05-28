@@ -38,7 +38,31 @@
 
 			public void consume(ByteBuffer buffer) {
 
-				return;
+				/**/System.out.println("> Consume(" + buffer + ")");
+
+				System.out.print("[");
+				for (int i = buffer.position(); i < buffer.limit(); ++i) {
+
+					char character = (char) buffer.array()[i];
+
+					if (character == '\n') System.out.print("\\n");
+					else if (character == '\r') System.out.print("\\r");
+					else {
+
+						/*if (character == 'a') {
+
+							for (int j = i; (j + 1) < buffer.limit(); ++j) {
+
+								// Eliminar letras 'a':
+								buffer.array()[j] = buffer.array()[j + 1];
+							}
+							buffer.limit(buffer.limit() - 1);
+							--i;
+						}*/
+						System.out.print(character);
+					}
+				}
+				System.out.println("]");
 			}
 		};
 	}

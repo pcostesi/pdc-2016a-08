@@ -2,7 +2,6 @@
 	package ar.edu.itba.protos.transport.handler;
 
 	import java.io.IOException;
-	import java.net.InetSocketAddress;
 	import java.nio.channels.SelectionKey;
 	import java.nio.channels.ServerSocketChannel;
 	import java.nio.channels.SocketChannel;
@@ -51,13 +50,6 @@
 
 					// Especifico el flujo que identifica este canal:
 					attachment.setDownstream(downstream);
-
-					/**/InetSocketAddress remote = getRemote(socket);
-					System.out.println(
-							"La conexión fue aceptada correctamente");
-					System.out.println(
-							"\t(IP, Port) = (" + remote.getHostString() +
-							", " + remote.getPort() + ")");
 				}
 				else throw new IOException();
 			}
@@ -89,22 +81,16 @@
 		private int getOptions(Attachment attachment) {
 
 			int options = SelectionKey.OP_READ;
-			if (attachment != null && attachment.hasOutboundData()) {
+			if (attachment != null) {
 
-				options |= SelectionKey.OP_WRITE;
+				attachment.getOutboundBuffer().flip();
+				if (attachment.hasOutboundData()) {
+
+					options |= SelectionKey.OP_WRITE;
+				}
+				attachment.getOutboundBuffer().compact();
 			}
 			return options;
-		}
-
-		/*
-		** Obtiene la dirección remota del cliente conectado,
-		** es decir, su dirección IP y su puerto de salida.
-		*/
-
-		private InetSocketAddress getRemote(SocketChannel socket)
-			throws IOException {
-
-			return (InetSocketAddress) socket.getRemoteAddress();
 		}
 
 		/*

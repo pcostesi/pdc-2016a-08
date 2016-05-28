@@ -3,6 +3,8 @@
 
 	import java.io.IOException;
 
+	import ar.edu.itba.protos.transport.concrete.EchoAttachmentFactory;
+	import ar.edu.itba.protos.transport.concrete.ForwardAttachmentFactory;
 	import ar.edu.itba.protos.transport.handler.AcceptHandler;
 	import ar.edu.itba.protos.transport.handler.ConnectHandler;
 	import ar.edu.itba.protos.transport.handler.ReadHandler;
@@ -10,7 +12,6 @@
 	import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.reactor.Reactor;
 	import ar.edu.itba.protos.transport.support.AttachmentFactory;
-	import ar.edu.itba.protos.transport.support.BasicAttachmentFactory;
 	import ar.edu.itba.protos.transport.support.Message;
 	import ar.edu.itba.protos.transport.support.Server;
 
@@ -30,11 +31,15 @@
 		public static void main(String [] arguments) {
 
 			/*
-			** Fábrica de 'attachments' estáticos de 4 Kb. Cada
-			** servidor puede tener una fábrica distinta en cada
-			** puerto de escucha (es decir, en cada 'listener'):
+			** Fábricas de 'attachments'. Cada servidor puede
+			** tener una fábrica distinta en cada puerto de
+			** escucha (es decir, en cada 'listener'):
 			*/
-			final AttachmentFactory factory = new BasicAttachmentFactory();
+			final AttachmentFactory forwardFactory
+				= new ForwardAttachmentFactory();
+
+			final AttachmentFactory echoFactory
+				= new EchoAttachmentFactory();
 
 			/*
 			** Se instalan los manejadores (Handlers) en el
@@ -51,8 +56,8 @@
 			** un 'binding' en cada dirección especificada:
 			*/
 			final Server pop3 = new Server()
-				.addListener("0.0.0.0", 1100, factory)
-				.addListener("0.0.0.0", 6660, null);
+				.addListener("0.0.0.0", 110, forwardFactory)
+				.addListener("0.0.0.0", 7, echoFactory);
 
 			try {
 

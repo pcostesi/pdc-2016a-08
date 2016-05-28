@@ -3,6 +3,7 @@
 
 	import java.io.IOException;
 	import java.net.InetSocketAddress;
+	import java.net.SocketAddress;
 	import java.nio.ByteBuffer;
 	import java.nio.channels.SelectionKey;
 	import java.nio.channels.SocketChannel;
@@ -58,7 +59,8 @@
 		** Este método es llamado cada vez que el canal asociado a este
 		** 'attachment' se cierra y permite aplicar un post-proceso
 		** adicional (por ejemplo, llenar el buffer de salida con algún
-		** mensaje de error).
+		** mensaje de error). Se espera que este método manipule libremente
+		** el contenido del buffer 'inbound'.
 		*/
 
 		public abstract void onUnplug(Event event);
@@ -183,6 +185,26 @@
 		}
 
 		/*
+		** Devuelve 'true' si el buffer de entrada se
+		** llenó, o 'false' en otro caso.
+		*/
+
+		public boolean hasFullInbound() {
+
+			return !getInboundBuffer().hasRemaining();
+		}
+
+		/*
+		** Devuelve 'true' si el buffer de salida se
+		** llenó, o 'false' en otro caso.
+		*/
+
+		public boolean hasFullOutbound() {
+
+			return !getOutboundBuffer().hasRemaining();
+		}
+
+		/*
 		** Especifica si el socket está conectado, es decir, si el
 		** mismo puede utilizarse para transferir un flujo de bytes
 		** entre sus extremos.
@@ -192,5 +214,68 @@
 
 			SocketChannel socket = getSocket();
 			return (socket != null) && socket.isConnected();
+		}
+
+		/*
+		** Permite establecer una nueva conexión remota, en la
+		** dirección especificada, seleccionando además el
+		** 'attachment' que este canal debe tener asociado. El
+		** método devuelve 'true' si pudo crear el canal, o
+		** 'false', si no pudo.
+		*/
+
+		public SelectionKey addStream(
+								SocketAddress address,
+								Attachment attachment) {
+
+			try {
+
+				// Creo un nuevo socket:
+				SocketChannel socket = SocketChannel.open();
+
+				// Registro el canal en el selector:
+				SelectionKey key = socket
+					.configureBlocking(false)
+					.register(
+						getDownstream().selector(),
+						SelectionKey.OP_CONNECT,
+						attachment);
+
+				// Especifico la clave del nuevo stream:
+				attachment.setDownstream(key);
+
+				// Intento conectarme al host remoto:
+				if (socket.connect(address)) {
+
+					System.out.println("Conexión remota instantánea!");
+					//onConnect(key)
+				}
+				else {
+
+					System.out.println("La conexión no ha finalizado");
+				}
+
+				return key;
+			}
+			catch (IOException exception) {
+
+				return null;
+			}
+		}
+
+		/*
+		** Cierra el 'downstream' de este 'attachment'. Además,
+		** cancela la clave asociada a ese canal.
+		*/
+
+		public void closeDownstream() {
+
+			downstream.cancel();
+			SocketChannel socket = getSocket();
+			try {
+
+				if (socket.isOpen()) socket.close();
+			}
+			catch (IOException spurious) {}
 		}
 	}
