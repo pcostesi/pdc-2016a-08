@@ -9,10 +9,6 @@ public class Pop3FilterManager {
 	
 	private List<Pop3CommandFilter> filterChain = new ArrayList<Pop3CommandFilter>();
 	
-	Pop3FilterManager(){
-		
-	}
-	
 	public ParsedCommand filter(ByteBuffer buff){
 		
 		ParsedCommand result = new ParsedCommand();
