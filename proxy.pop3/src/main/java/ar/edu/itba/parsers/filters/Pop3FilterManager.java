@@ -10,7 +10,12 @@ public class Pop3FilterManager {
 	private List<Pop3CommandFilter> filterChain = new ArrayList<Pop3CommandFilter>();
 
 	Pop3FilterManager() {
-
+		filterChain.add(new Apop());
+		filterChain.add(new Top());
+		filterChain.add(new Quit());
+		filterChain.add(new Retr());
+		filterChain.add(new User());
+		filterChain.add(new Pass());
 	}
 
 	public ParsedCommand filter(ByteBuffer buff) {
