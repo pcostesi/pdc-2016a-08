@@ -74,7 +74,7 @@
 		/*
 		** Determina los eventos iniciales a los que este canal
 		** debe responder en función del estado por defecto del
-		** 'attachment', el cual es obtenido inmediatamente luego
+		** 'attachment', el cual es obtenido inmediatamente luego de
 		** crear el mismo a través de una fábrica (AttachmentFactory).
 		*/
 

@@ -7,6 +7,7 @@
 	import java.nio.ByteBuffer;
 	import java.nio.channels.SelectionKey;
 	import java.nio.channels.SocketChannel;
+	import java.nio.channels.UnresolvedAddressException;
 
 	import ar.edu.itba.protos.transport.reactor.Event;
 
@@ -247,20 +248,14 @@
 				// Intento conectarme al host remoto:
 				if (socket.connect(address)) {
 
-					System.out.println("Conexión remota instantánea!");
-					//onConnect(key)
+					// Conexión remota instantánea
 				}
-				else {
-
-					System.out.println("La conexión no ha finalizado");
-				}
-
+				else //La conexión no ha finalizado
 				return key;
 			}
-			catch (IOException exception) {
-
-				return null;
-			}
+			catch (UnresolvedAddressException exception) {}
+			catch (IOException exception) {}
+			return null;
 		}
 
 		/*
@@ -270,12 +265,35 @@
 
 		public void closeDownstream() {
 
-			downstream.cancel();
-			SocketChannel socket = getSocket();
-			try {
+			close(downstream);
+		}
 
-				if (socket.isOpen()) socket.close();
+		/*
+		** Cierra el 'upstream' de este 'attachment'. Además,
+		** cancela la clave asociada a ese canal.
+		*/
+
+		public void closeUpstream() {
+
+			close(upstream);
+		}
+
+		/*
+		** Cierra el canal especificado, y su correspondiente
+		** socket. Además cancela la clave asociada.
+		*/
+
+		private void close(SelectionKey stream) {
+
+			if (stream != null) {
+
+				stream.cancel();
+				SocketChannel socket = (SocketChannel) stream.channel();
+				try {
+
+					if (socket.isOpen()) socket.close();
+				}
+				catch (IOException spurious) {}
 			}
-			catch (IOException spurious) {}
 		}
 	}

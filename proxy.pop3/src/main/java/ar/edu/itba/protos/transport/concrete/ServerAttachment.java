@@ -16,7 +16,8 @@
 		* será forwardeado efectivamente en las dos direcciones.
 		*/
 
-	public class OriginServerAttachment extends Attachment {
+	public class ServerAttachment extends Attachment
+									implements Interceptor {
 
 		// El buffer de entrada (lectura):
 		private ByteBuffer inbound = null;
@@ -24,17 +25,15 @@
 		// El buffer de salida (escritura):
 		private ByteBuffer outbound = null;
 
-		public OriginServerAttachment(
-								SelectionKey upstream,
-								ByteBuffer inbound,
-								ByteBuffer outbound) {
+		public ServerAttachment(
+							SelectionKey upstream,
+							ByteBuffer inbound,
+							ByteBuffer outbound) {
 
+			// Cierro el circuito virtual:
 			this.inbound = inbound;
 			this.outbound = outbound;
 			this.upstream = upstream;
-
-			// Este es el 'greeting-banner' (server-side):
-			this.outbound.put("(Server) Hi!\n".getBytes());
 		}
 
 		@Override
@@ -52,16 +51,26 @@
 		@Override
 		public Interceptor getInterceptor() {
 
-			// Aquí se encuentra el interceptor 'server-side':
-			return Interceptor.DEFAULT;
+			return this;
 		}
 
 		@Override
 		public void onUnplug(Event event) {
 
-			System.out.println("> onUnplug(" + event + ")");
+			/**/System.out.println("> Server.onUnplug(" + event + ")");
+
+			// Vacío el buffer 'inbound':
+			inbound.clear();
 
 			// Un mensaje de despedida:
 			inbound.put("(Server) Bye!".getBytes());
+
+			// Fuerzo el cierre del cliente:
+			closeUpstream();
+		}
+
+		public void consume(ByteBuffer buffer) {
+
+			Interceptor.DEFAULT.consume(buffer);
 		}
 	}

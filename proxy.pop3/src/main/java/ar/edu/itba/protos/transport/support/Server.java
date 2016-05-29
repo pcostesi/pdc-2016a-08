@@ -127,7 +127,7 @@
 					while (iterator.hasNext()) {
 
 						SelectionKey key = iterator.next();
-						System.out.println("> Select: " + key);
+						System.out.println("> Select (" + key + ")");
 
 						// Solicito que un manejador resuelva el evento:
 						demultiplexor.dispatch(key);

@@ -1,6 +1,7 @@
 
 	package ar.edu.itba.protos.transport.reactor;
 
+	import java.nio.channels.CancelledKeyException;
 	import java.nio.channels.SelectionKey;
 
 		/**
@@ -27,6 +28,16 @@
 		}
 
 		/*
+		** Devuelve la máscara asociada a cada evento,
+		** la cual se obtiene de la clase SelectionKey.
+		*/
+
+		public int getOptions() {
+
+			return options;
+		}
+
+		/*
 		** Habilita nuevos eventos en la clave especificada
 		** sin modificar el resto de ellos.
 		*/
@@ -35,7 +46,11 @@
 
 			if (key != null) {
 
-				key.interestOps(key.interestOps() | options);
+				try {
+
+					key.interestOps(key.interestOps() | options);
+				}
+				catch (CancelledKeyException spurious) {}
 			}
 		}
 
@@ -50,15 +65,5 @@
 
 				key.interestOps(key.interestOps() & (~options));
 			}
-		}
-
-		/*
-		** Devuelve la máscara asociada a cada evento,
-		** la cual se obtiene de la clase SelectionKey.
-		*/
-
-		public int getOptions() {
-
-			return options;
 		}
 	}
