@@ -1,22 +1,27 @@
-package ar.edu.itba.parsers;
+package ar.edu.itba.parsers.filters;
 
-public class Pass implements Pop3CommandFilter {
+import ar.edu.itba.parsers.Pop3Command;
 
+public class Retr implements Pop3CommandFilter {
+	
+	@Override
 	public boolean filter(String input, ParsedCommand result) {
-		
+
 		boolean match = false;
 
 		if (input.length() <= 5) {
-		} else if (input.startsWith("pass ")) {
-			result.command = Pop3Command.PASS;
+		} else if (input.startsWith("retr ")) {
+			result.command = Pop3Command.RETR;
 			match = true;
 			if (input.length() > 5) {
-				result.params = input.substring(6);
+				result.params = input.substring(5);
 				int i;
 				if (result.params.length() <= maxArgumentSize) {
 					result.status = true;
+					char c;
 					for (i = 0; i < result.params.length(); i++) {
-						if (Character.isWhitespace(result.params.charAt(i))) {
+						c = result.params.charAt(i);
+						if (!Character.isDigit(c)) {
 							result.status = false;
 							break;
 						}

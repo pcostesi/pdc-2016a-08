@@ -1,4 +1,6 @@
-package ar.edu.itba.parsers;
+package ar.edu.itba.parsers.filters;
+
+import ar.edu.itba.parsers.Pop3Command;
 
 public class Apop implements Pop3CommandFilter {
 
@@ -11,7 +13,7 @@ public class Apop implements Pop3CommandFilter {
 			result.command = Pop3Command.APOP;
 			match = true;
 			if (input.length() > 5) {
-				result.params = input.substring(6);
+				result.params = input.substring(5);
 				result.status = true;
 			}
 		}

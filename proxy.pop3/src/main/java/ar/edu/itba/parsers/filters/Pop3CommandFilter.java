@@ -1,4 +1,4 @@
-package ar.edu.itba.parsers;
+package ar.edu.itba.parsers.filters;
 
 public interface Pop3CommandFilter {
 	
