@@ -26,6 +26,20 @@
 			= "No se pudo agregar el nuevo 'listener'";
 
 		/*
+		** Errores asociados a la clase 'ConnectHandler':
+		*/
+
+		public static final String CLOSED_PORT
+			= "El puerto destino (origin-server) parece estar cerrado";
+
+		/*
+		** Errores asociados a la clase 'ClientAttachment':
+		*/
+
+		public static final String CANNOT_FORWARD
+			= "No se puede conectar con el 'origin-server'";
+
+		/*
 		** Error desconocido:
 		*/
 

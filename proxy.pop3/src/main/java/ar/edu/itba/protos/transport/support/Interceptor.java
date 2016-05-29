@@ -38,7 +38,20 @@
 
 			public void consume(ByteBuffer buffer) {
 
-				return;
+				// Todo esto no debería estar:
+				System.out.print(">>> Consume(" + buffer + ")\n\t= [");
+				for (int i = buffer.position(); i < buffer.limit(); ++i) {
+
+					char character = (char) buffer.array()[i];
+					if (character == '\n') {
+
+						if (i + 1 == buffer.limit()) System.out.print("\\n");
+						else System.out.println("\\n");
+					}
+					else if (character == '\r') System.out.print("\\r");
+					else System.out.print(character);
+				}
+				System.out.println("]");
 			}
 		};
 	}

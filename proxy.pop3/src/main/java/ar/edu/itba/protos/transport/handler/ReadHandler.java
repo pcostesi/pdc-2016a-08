@@ -6,6 +6,7 @@
 	import java.nio.channels.SelectionKey;
 	import java.nio.channels.SocketChannel;
 
+	import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
 	import ar.edu.itba.protos.transport.support.Interceptor;
@@ -38,62 +39,48 @@
 
 			try {
 
-				// La terna debería ser (0, C, C):
-				/**/System.out.println("\tPos: " + buffer.position());
-				/**/System.out.println("\tLim: " + buffer.limit());
-				/**/System.out.println("\tRem: " + buffer.remaining());
+				// Recuerdo donde estaba antes de leer:
+				int position = buffer.position();
 
 				if (BROKEN_PIPE < socket.read(buffer)) {
 
-					buffer.flip();
-					/**/System.out.println("Reading: " +
-							buffer.remaining() + " byte's");
+					// Realiza un 'flip' acotado al nuevo flujo:
+					buffer.limit(buffer.position());
+					buffer.position(position);
 
 					// Consumo el flujo de bytes entrante:
-					Interceptor interceptor = getInterceptor(attachment);
-					interceptor.consume(buffer);
+					getInterceptor(attachment).consume(buffer);
 
-					// La terna debería ser (0, n, n):
-					/**/System.out.println("\tPos: " + buffer.position());
-					/**/System.out.println("\tLim: " + buffer.limit());
-					/**/System.out.println("\tRem: " + buffer.remaining());
+					// Backtracking (no recuerda el límite):
+					buffer.position(position);
 
-					// Si hay información para enviar, abro el 'upstream':
-					if (attachment.hasInboundData()) {
+					// Abrir el 'upstream' si hay algo nuevo:
+					detectInbound(attachment);
 
-						SelectionKey upstream = attachment.getUpstream();
-						enableWrite(upstream);
+					// Habilito más espacio para lectura:
+					buffer.position(buffer.limit());
+					buffer.limit(buffer.capacity());
+
+					// Si el buffer se llenó, ya no se puede leer:
+					if (attachment.hasFullInbound()) {
+
+						Event.disable(key, SelectionKey.OP_READ);
 					}
 				}
 				else {
 
-					key.cancel();
-					socket.close();
-					/**/System.out.println("El host remoto se ha desconectado");
+					// Desconecto el 'downstream':
+					attachment.closeDownstream();
+					attachment.setDownstream(null);
+					attachment.onUnplug(Event.READ);
 
-					// De que lado se cerró? Debemos cerrar el otro extremo!!!
-					// Es decir, el origin-server, sino, hay que reportar error.
-					// Quizás sea mejor crear un método especial para desconexiones.
+					// Si hay información para enviar, abro el 'upstream':
+					detectInbound(attachment);
 				}
 			}
 			catch (IOException exception) {
 
 				System.out.println(Message.UNKNOWN);
-			}
-		}
-
-		/*
-		** Habilita la operación de escritura en el canal especificado
-		** lo que permite enviar un flujo de bytes hacia un host
-		** destino (outbound).
-		*/
-
-		private void enableWrite(SelectionKey stream) {
-
-			if (stream != null) {
-
-				int options = stream.interestOps();
-				stream.interestOps(options | SelectionKey.OP_WRITE);
 			}
 		}
 
@@ -108,5 +95,20 @@
 			Interceptor interceptor = attachment.getInterceptor();
 			if (interceptor != null) return interceptor;
 			else return Interceptor.DEFAULT;
+		}
+
+		/*
+		** En caso de que el 'attachment' posea información
+		** disponible para enviar (en el buffer 'inbound'),
+		** habilita el canal de escritura en el 'upstream'.
+		*/
+
+		private void detectInbound(Attachment attachment) {
+
+			if (attachment.hasInboundData()) {
+
+				SelectionKey upstream = attachment.getUpstream();
+				Event.enable(upstream, SelectionKey.OP_WRITE);
+			}
 		}
 	}

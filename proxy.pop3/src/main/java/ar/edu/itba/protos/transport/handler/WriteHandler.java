@@ -6,6 +6,7 @@
 	import java.nio.channels.SelectionKey;
 	import java.nio.channels.SocketChannel;
 
+	import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
 	import ar.edu.itba.protos.transport.support.Message;
@@ -21,6 +22,11 @@
 
 	public final class WriteHandler implements Handler {
 
+		/*
+		** Procesa el evento para el cual está subscripto. En este
+		** caso, el evento es de escritura del flujo de bytes.
+		*/
+
 		public void handle(SelectionKey key) {
 
 			/**/System.out.println("> Write (" + key + ")");
@@ -29,7 +35,16 @@
 			ByteBuffer buffer = attachment.getOutboundBuffer();
 			SocketChannel socket = attachment.getSocket();
 
+			// El buffer estaba lleno?
+			boolean full = false;
+
 			try {
+
+				// Si no hay espacio, hay que rehabilitar la lectura:
+				if (buffer.position() == buffer.limit()) full = true;
+
+				// Veo qué hay para enviar:
+				buffer.flip();
 
 				// Enviar un flujo de datos:
 				int written = socket.write(buffer);
@@ -37,27 +52,45 @@
 				// Si se envió todo el flujo, deshabilitar escritura:
 				if (!attachment.hasOutboundData()) {
 
-					disableWrite(key);
+					Event.disable(key, SelectionKey.OP_WRITE);
 				}
 
-				// Liberar espacio para una lectura (inbound):
-				if (0 < written) buffer.compact();
+				// Si logró enviar datos:
+				if (0 < written) {
+
+					// Liberar espacio para lectura (inbound):
+					buffer.compact();
+
+					// Si estaba lleno y se vació algo, habilito lectura:
+					if (full) Event.enable(key, SelectionKey.OP_READ);
+				}
 			}
 			catch (IOException exception) {
 
-				// El canal se cerró.
 				System.out.println(Message.UNKNOWN);
+
+				// Desconecto el 'downstream':
+				attachment.closeDownstream();
+				attachment.setDownstream(null);
+				attachment.onUnplug(Event.WRITE);
+
+				// Si hay información para enviar, abro el 'upstream':
+				detectInbound(attachment);
 			}
 		}
 
 		/*
-		** En caso de que todo el flujo de bytes disponible se
-		** haya transferido por completo, se deshabilitan los
-		** eventos de escritura para este canal.
+		** En caso de que el 'attachment' posea información
+		** disponible para enviar (en el buffer 'inbound'),
+		** habilita el canal de escritura en el 'upstream'.
 		*/
 
-		private void disableWrite(SelectionKey key) {
+		private void detectInbound(Attachment attachment) {
 
-			key.interestOps(key.interestOps() & (~SelectionKey.OP_WRITE));
+			if (attachment.hasInboundData()) {
+
+				SelectionKey upstream = attachment.getUpstream();
+				Event.enable(upstream, SelectionKey.OP_WRITE);
+			}
 		}
 	}
