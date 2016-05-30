@@ -8,7 +8,7 @@ public class Apop implements Pop3CommandFilter {
 
 		boolean match = false;
 
-		if (input.length() <= 5) {
+		if (input.length() < 5) {
 		} else if (input.startsWith("apop ")) {
 			result.command = Pop3Command.APOP;
 			match = true;

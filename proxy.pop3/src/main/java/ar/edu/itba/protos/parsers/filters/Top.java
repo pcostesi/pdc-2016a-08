@@ -8,7 +8,7 @@ public class Top implements Pop3CommandFilter {
 		
 		boolean match = false;
 
-		if (input.length() <= 4) {
+		if (input.length() < 4) {
 		} else if (input.startsWith("top ")) {
 			result.command = Pop3Command.TOP;
 			match = true;

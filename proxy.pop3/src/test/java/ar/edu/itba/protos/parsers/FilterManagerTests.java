@@ -56,7 +56,7 @@ public class FilterManagerTests {
 	
 	@Test
 	public void parseIncompleteCommandTest() {
-		String commandToTest = "USER";
+		String commandToTest = "USER ";
 		ByteBuffer buffer = ByteBuffer.wrap(commandToTest.getBytes());
 		ParsedCommand result = parser.filter(buffer);
 		assertTrue(result.status == false && result.command == Pop3Command.USER);

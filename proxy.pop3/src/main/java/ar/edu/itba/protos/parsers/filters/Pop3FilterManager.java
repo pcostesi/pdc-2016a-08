@@ -22,15 +22,14 @@ public class Pop3FilterManager {
 
 		ParsedCommand result = new ParsedCommand();
 
-		CharBuffer CBCommand = buff.asCharBuffer();
-		String SCommand = CBCommand.toString();
+		String SCommand = new String(buff.array());
 
 		if (SCommand.length() < 4) {
 			return result;
 		}
 		String aux = SCommand.substring(0, 4).toLowerCase();
 
-		String input = aux + SCommand.substring(5, SCommand.length());
+		String input = aux + SCommand.substring(4, SCommand.length());
 
 		for (Pop3CommandFilter fil : filterChain) {
 			if (fil.filter(input, result)) {

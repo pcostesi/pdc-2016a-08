@@ -9,7 +9,7 @@ public class Retr implements Pop3CommandFilter {
 
 		boolean match = false;
 
-		if (input.length() <= 5) {
+		if (input.length() < 5) {
 		} else if (input.startsWith("retr ")) {
 			result.command = Pop3Command.RETR;
 			match = true;

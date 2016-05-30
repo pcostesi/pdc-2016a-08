@@ -8,7 +8,7 @@ public class Pass implements Pop3CommandFilter {
 		
 		boolean match = false;
 
-		if (input.length() <= 5) {
+		if (input.length() < 5) {
 		} else if (input.startsWith("pass ")) {
 			result.command = Pop3Command.PASS;
 			match = true;

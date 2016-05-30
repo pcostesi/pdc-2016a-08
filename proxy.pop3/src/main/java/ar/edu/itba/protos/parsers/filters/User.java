@@ -8,7 +8,7 @@ public class User implements Pop3CommandFilter {
 		
 		boolean match = false;
 		
-		if (input.length() <= 5) {
+		if (input.length() < 5) {
 		} else if (input.startsWith("user ")){
 			result.command = Pop3Command.USER;
 			match = true;
