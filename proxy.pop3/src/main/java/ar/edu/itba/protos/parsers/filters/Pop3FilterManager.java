@@ -1,4 +1,4 @@
-package ar.edu.itba.parsers.filters;
+package ar.edu.itba.protos.parsers.filters;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -9,7 +9,7 @@ public class Pop3FilterManager {
 
 	private List<Pop3CommandFilter> filterChain = new ArrayList<Pop3CommandFilter>();
 
-	Pop3FilterManager() {
+	public Pop3FilterManager() {
 		filterChain.add(new Apop());
 		filterChain.add(new Top());
 		filterChain.add(new Quit());

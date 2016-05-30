@@ -1,6 +1,6 @@
-package ar.edu.itba.parsers.filters;
+package ar.edu.itba.protos.parsers.filters;
 
-import ar.edu.itba.parsers.Pop3Command;
+import ar.edu.itba.protos.parsers.Pop3Command;
 
 public class Retr implements Pop3CommandFilter {
 	
