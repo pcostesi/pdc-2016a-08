@@ -25,14 +25,25 @@
 
 	public final class Server {
 
+		// TODO: Obtener por configuración estas 2 constantes:
+		private static final long TIMEOUT = 10000;
+
+		// Cada cuánto se monitorean los canales inactivos:
+		private static final long LAZY_DETECTION_INTERVAL = 1000;
+
+		// Demultiplexador de eventos generados:
+		private static final Reactor demultiplexor
+			= Reactor.getInstance();
+
+		// Watchdog-timer utilizado para cerrar canales inactivos:
+		private final WatchdogTimer watchdog
+			= new WatchdogTimer(TIMEOUT);
+
 		// Generador de eventos:
-		private Selector selector;
+		private Selector selector = null;
 
 		// Lista de sockets escuchando conexiones entrantes:
 		private List<ServerSocketChannel> listeners = null;
-
-		// Demultiplexador de eventos generados:
-		private final Reactor demultiplexor = Reactor.getInstance();
 
 		public Server() {
 
@@ -112,33 +123,37 @@
 		** solicita que un manejador adecuado procese dicho evento.
 		*/
 
-		// ¿Este 'timeout' debe existir?:
-		private static final int TIMEOUT = 10000;
-
 		public void dispatch() throws IOException {
 
 			while (true) {
 
-				if (0 < selector.select(TIMEOUT)) {
+				// Cierro todos los canales inactivos:
+				watchdog.killLazyActivities();
+
+				if (0 < selector.select(LAZY_DETECTION_INTERVAL)) {
 
 					Set<SelectionKey> keys = selector.selectedKeys();
 					Iterator<SelectionKey> iterator = keys.iterator();
 
 					while (iterator.hasNext()) {
 
+						// Obtengo una clave:
 						SelectionKey key = iterator.next();
-						System.out.println("> Select (" + key + ")");
+
+						// Si no es un 'listener', actualizo el watchdog:
+						if (!isListener(key)) {
+
+							watchdog.removeActivity(key);
+							watchdog.addActivity(key);
+						}
+
+						/**/System.out.println("> Select (" + key + ")");
 
 						// Solicito que un manejador resuelva el evento:
 						demultiplexor.dispatch(key);
 
 						iterator.remove();
 					}
-				}
-				else {
-
-					System.out.println("Selector Timeout");
-					return;
 				}
 			}
 		}
@@ -154,6 +169,9 @@
 		public void shutdown() throws IOException {
 
 			Set<SelectionKey> keys = selector.keys();
+
+			// Cierra el monitoreo de actividades:
+			watchdog.removeAll();
 
 			// Cierra los canales:
 			for (SelectionKey key : keys) {
@@ -173,5 +191,17 @@
 
 			// Cierra el selector:
 			if (selector.isOpen()) selector.close();
+		}
+
+		/*
+		** Devuelve 'true' si la clave está activa para el
+		** evento ACCEPT, es decir, que el canal se encuentra
+		** a disposición de conexiones entrantes, tal cual lo
+		** hace un 'ServerSocketChannel' (listener).
+		*/
+
+		private boolean isListener(SelectionKey key) {
+
+			return 0 != (key.interestOps() & SelectionKey.OP_ACCEPT);
 		}
 	}
