@@ -24,26 +24,10 @@
 		// La constante de inactividad (en milisegundos):
 		private long timeout;
 
-		// El método de comparación de actividades:
-		private static final Comparator<Activity> comparator
-			= new Comparator<Activity>() {
-
-			/*
-			** Este comparador mantiene las actividades con
-			** mayor tiempo de inactividad al frente de la cola.
-			*/
-
-			public int compare(Activity x, Activity y) {
-
-				if (x.inactivity < y.inactivity) return -1;
-				if (x.inactivity > y.inactivity) return 1;
-				return 0;
-			}
-		};
-
 		// Cola de actividades (ordenada por inactividad):
 		private final PriorityQueue<Activity> activities
-			= new PriorityQueue<Activity>(comparator);
+			= new PriorityQueue<Activity>(
+					Comparator.comparing(Activity::getInactivity));
 
 		public WatchdogTimer(long timeout) {
 
@@ -94,10 +78,10 @@
 			while (!activities.isEmpty()) {
 
 				Activity activity = activities.peek();
-				if (timeout < now - activity.inactivity) {
+				if (timeout < now - activity.getInactivity()) {
 
 					activities.poll();
-					close(activity.key);
+					close(activity.getKey());
 				}
 				else break;
 			}
@@ -150,15 +134,29 @@
 		private final class Activity {
 
 			// Cantidad de inactividad en milisegundos:
-			public long inactivity;
+			private long inactivity;
 
 			// Clave del canal asociado a esta actividad:
-			public SelectionKey key;
+			private SelectionKey key;
 
 			public Activity(long inactivity, SelectionKey key) {
 
 				this.inactivity = inactivity;
 				this.key = key;
+			}
+
+			/*
+			** Getter's
+			*/
+
+			public long getInactivity() {
+
+				return inactivity;
+			}
+
+			public SelectionKey getKey() {
+
+				return key;
 			}
 
 			@Override
