@@ -1,107 +1,101 @@
 
-	package ar.edu.itba.protos.transport.concrete;
+package ar.edu.itba.protos.transport.concrete;
 
-	import java.net.InetSocketAddress;
-	import java.net.SocketAddress;
-	import java.nio.ByteBuffer;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
 
-	import ar.edu.itba.protos.transport.reactor.Event;
-	import ar.edu.itba.protos.transport.support.Attachment;
-	import ar.edu.itba.protos.transport.support.Interceptor;
-	import ar.edu.itba.protos.transport.support.Message;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-		/**
-		* Este 'attachment' se crea cada vez que un cliente
-		* establece efectivamente la conexión con un servidor de
-		* origen real. Bajo estas circustancias, el circuito virtual
-		* a través del proxy estará completo, y el flujo de bytes
-		* será forwardeado efectivamente en las dos direcciones.
-		*/
+import ar.edu.itba.protos.transport.reactor.Event;
+import ar.edu.itba.protos.transport.support.Attachment;
+import ar.edu.itba.protos.transport.support.Interceptor;
+import ar.edu.itba.protos.transport.support.Message;
 
-	public final class ClientAttachment extends Attachment
-										implements Interceptor {
+/**
+ * Este 'attachment' se crea cada vez que un cliente establece efectivamente la
+ * conexión con un servidor de origen real. Bajo estas circustancias, el
+ * circuito virtual a través del proxy estará completo, y el flujo de bytes será
+ * forwardeado efectivamente en las dos direcciones.
+ */
 
-		// El buffer de entrada (lectura):
-		private ByteBuffer inbound
-			= ByteBuffer.allocate(ForwardAttachmentFactory.BUFFER_SIZE);
+public final class ClientAttachment extends Attachment implements Interceptor {
+	private final static Logger logger = LoggerFactory.getLogger(ClientAttachment.class);
 
-		// El buffer de salida (escritura):
-		private ByteBuffer outbound
-			= ByteBuffer.allocate(ForwardAttachmentFactory.BUFFER_SIZE);
+	// El buffer de entrada (lectura):
+	private ByteBuffer inbound = ByteBuffer.allocate(ForwardAttachmentFactory.BUFFER_SIZE);
 
-		public ClientAttachment() {
+	// El buffer de salida (escritura):
+	private ByteBuffer outbound = ByteBuffer.allocate(ForwardAttachmentFactory.BUFFER_SIZE);
 
-			// Este es el 'greeting-banner' (client-side):
-			byte [] greetingBanner
-				= "+OK POP-3 Proxy Server (ready).\r\n".getBytes();
+	public ClientAttachment() {
+		// Este es el 'greeting-banner' (client-side):
+		byte[] greetingBanner = "+OK POP-3 Proxy Server (ready).\r\n".getBytes();
 
-			// Se lo envío al cliente (MUA):
-			if (greetingBanner.length <= outbound.remaining())
-				outbound.put(greetingBanner);
-		}
+		// Se lo envío al cliente (MUA):
+		if (greetingBanner.length <= outbound.remaining())
+			outbound.put(greetingBanner);
+	}
 
-		@Override
-		public ByteBuffer getInboundBuffer() {
+	@Override
+	public ByteBuffer getInboundBuffer() {
+		return inbound;
+	}
 
-			return inbound;
-		}
+	@Override
+	public ByteBuffer getOutboundBuffer() {
+		return outbound;
+	}
 
-		@Override
-		public ByteBuffer getOutboundBuffer() {
+	@Override
+	public Interceptor getInterceptor() {
+		return this;
+	}
 
-			return outbound;
-		}
+	@Override
+	public void onUnplug(Event event) {
 
-		@Override
-		public Interceptor getInterceptor() {
+		logger.trace("> Client.onUnplug({})", event);
 
-			return this;
-		}
+		// Vacío el buffer 'inbound':
+		inbound.clear();
 
-		@Override
-		public void onUnplug(Event event) {
+		// Un mensaje de despedida:
+		inbound.put("(Client) Bye!\n".getBytes());
 
-			/**/System.out.println("> Client.onUnplug(" + event + ")");
+		// Fuerza el cierre del 'upstream':
+		closeUpstream();
+	}
 
-			// Vacío el buffer 'inbound':
-			inbound.clear();
+	private boolean first = true;
 
-			// Un mensaje de despedida:
-			inbound.put("(Client) Bye!\n".getBytes());
+	public void consume(ByteBuffer buffer) {
 
-			// Fuerza el cierre del 'upstream':
-			closeUpstream();
-		}
+		if (first) {
 
-		private boolean first = true;
-		public void consume(ByteBuffer buffer) {
+			// Vacío el buffer antes de conectarme al 'origin-server':
+			buffer.limit(buffer.position());
 
-			if (first) {
+			// El 'attachment' de tipo 'server-side':
+			Attachment attach = new ServerAttachment(downstream, outbound, inbound);
 
-				// Vacío el buffer antes de conectarme al 'origin-server':
-				buffer.limit(buffer.position());
+			// El servidor remoto (origin-server):
+			SocketAddress address = new InetSocketAddress("pop.speedy.com.ar", 110);
 
-				// El 'attachment' de tipo 'server-side':
-				Attachment attach = new ServerAttachment(
-					downstream, outbound, inbound);
+			// Creo el stream 'server-side':
+			upstream = addStream(address, attach);
 
-				// El servidor remoto (origin-server):
-				SocketAddress address = new InetSocketAddress(
-					"pop.speedy.com.ar", 110);
+			if (upstream == null) {
 
-				// Creo el stream 'server-side':
-				upstream = addStream(address, attach);
+				// No se pudo resolver el 'origin-server':
+				closeDownstream();
 
-				if (upstream == null) {
-
-					// No se pudo resolver el 'origin-server':
-					closeDownstream();
-
-					System.out.println(Message.CANNOT_FORWARD);
-				}
-
-				// Soló una vez:
-				first = false;
+				logger.error(Message.CANNOT_FORWARD);
 			}
+
+			// Soló una vez:
+			first = false;
 		}
 	}
+}
