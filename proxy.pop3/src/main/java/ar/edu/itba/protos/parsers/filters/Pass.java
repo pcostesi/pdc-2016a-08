@@ -5,7 +5,7 @@ import ar.edu.itba.protos.parsers.Pop3Command;
 public class Pass implements Pop3CommandFilter {
 
 	public boolean filter(String input, ParsedCommand result) {
-		
+
 		boolean match = false;
 
 		if (input.length() < 5) {
@@ -22,7 +22,6 @@ public class Pass implements Pop3CommandFilter {
 							result.status = false;
 							break;
 						}
-
 					}
 				}
 			}
