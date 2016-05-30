@@ -1,4 +1,4 @@
-package ar.edu.itba.parsers;
+package ar.edu.itba.protos.parsers;
 
 import java.nio.CharBuffer;
 

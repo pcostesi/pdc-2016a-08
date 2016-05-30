@@ -1,4 +1,6 @@
-package ar.edu.itba.parsers;
+package ar.edu.itba.protos.parsers.filters;
+
+import ar.edu.itba.protos.parsers.Pop3Command;
 
 public class User implements Pop3CommandFilter {
 
@@ -12,7 +14,7 @@ public class User implements Pop3CommandFilter {
 			match = true;
 
 			if (input.length() > 5) {
-				result.params = input.substring(6);
+				result.params = input.substring(5);
 				int i;
 				if (result.params.length() <= maxArgumentSize) {
 					result.status = true;

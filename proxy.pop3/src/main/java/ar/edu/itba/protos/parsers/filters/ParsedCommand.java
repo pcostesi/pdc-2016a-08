@@ -1,4 +1,6 @@
-package ar.edu.itba.parsers;
+package ar.edu.itba.protos.parsers.filters;
+
+import ar.edu.itba.protos.parsers.Pop3Command;
 
 public class ParsedCommand {
 	
