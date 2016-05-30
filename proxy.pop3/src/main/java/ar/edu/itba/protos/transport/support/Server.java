@@ -14,6 +14,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Inject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ar.edu.itba.protos.transport.reactor.Reactor;
 
 /**
@@ -21,9 +26,9 @@ import ar.edu.itba.protos.transport.reactor.Reactor;
  * especificados, y genera eventos de forma no-bloqueante, los cuales son
  * despachados hacia un demultiplexor (implementado mediante un reactor).
  */
-
 public final class Server {
-
+	private static final Logger logger = LoggerFactory.getLogger(Server.class);
+	
 	// Generador de eventos:
 	private Selector selector;
 
@@ -31,12 +36,12 @@ public final class Server {
 	private List<ServerSocketChannel> listeners = null;
 
 	// Demultiplexador de eventos generados:
-	private final Reactor demultiplexor = Reactor.getInstance();
+	private final Reactor demultiplexor;
 
-	public Server() {
-
+	@Inject
+	public Server(Reactor demultiplexor) {
+		this.demultiplexor = demultiplexor;
 		try {
-
 			selector = Selector.open();
 			listeners = new ArrayList<ServerSocketChannel>();
 		} catch (IOException exception) {
@@ -65,25 +70,21 @@ public final class Server {
 	 */
 
 	public Server addListener(InetSocketAddress address, Object attach) {
-
+		logger.debug("Attaching listen socket {} to {}", address, attach);
 		try {
-
 			ServerSocketChannel channel = ServerSocketChannel.open();
 			channel.configureBlocking(false);
 			channel.socket().bind(address);
 			channel.register(selector, SelectionKey.OP_ACCEPT, attach);
 
-			// Si todo funcionó, agrego el nuevo canal:
 			listeners.add(channel);
+
 		} catch (BindException exception) {
-
-			System.out.println(Message.CANNOT_BIND);
+			logger.error(Message.CANNOT_BIND, exception);
 		} catch (SocketException exception) {
-
-			System.out.println(Message.UNRESOLVED_ADDRESS);
+			logger.error(Message.UNRESOLVED_ADDRESS, exception);
 		} catch (IOException exception) {
-
-			System.out.println(Message.CANNOT_LISTEN);
+			logger.error(Message.CANNOT_LISTEN, exception);
 		}
 		return this;
 	}
@@ -119,18 +120,14 @@ public final class Server {
 				Iterator<SelectionKey> iterator = keys.iterator();
 
 				while (iterator.hasNext()) {
-
 					SelectionKey key = iterator.next();
-					System.out.println("> Select (" + key + ")");
-
+					logger.trace("> Select ({})", key);
 					// Solicito que un manejador resuelva el evento:
 					demultiplexor.dispatch(key);
-
 					iterator.remove();
 				}
 			} else {
-
-				System.out.println("Selector Timeout");
+				logger.trace("Selector Timeout");
 				return;
 			}
 		}

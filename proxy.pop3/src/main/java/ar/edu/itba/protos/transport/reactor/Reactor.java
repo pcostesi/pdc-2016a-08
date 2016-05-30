@@ -7,25 +7,28 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import ar.edu.itba.protos.config.Configuration;
 
 /**
  * Implementación del patrón Reactor. Este sistema permite forwardear eventos
  * hacia distintas entidades desacopladas de forma eficiente y genérica. En este
  * caso, los eventos tratables se asocian a estados de canales de comunicación.
  */
-
+@Singleton
 public final class Reactor {
 	private final static Logger logger = LoggerFactory.getLogger(Reactor.class);
-
-	// Única instancia (singleton):
-	private static final Reactor instance = new Reactor();
 
 	// Mapa de entidades que pueden procesar eventos:
 	private Map<Event, Set<Handler>> handlers = null;
 
-	private Reactor() {
+	@Inject
+	public Reactor(Configuration config) {
 		// La estructura de búsqueda de eventos es un mapa:
 		handlers = new HashMap<Event, Set<Handler>>();
 
@@ -33,13 +36,7 @@ public final class Reactor {
 		for (Event event : Event.values()) {
 			handlers.put(event, new HashSet<Handler>());
 		}
-	}
-
-	/*
-	 ** Devuelve la única instancia de esta clase.
-	 */
-	public static Reactor getInstance() {
-		return instance;
+		logger.trace("Injected config is {}", config);
 	}
 
 	/*

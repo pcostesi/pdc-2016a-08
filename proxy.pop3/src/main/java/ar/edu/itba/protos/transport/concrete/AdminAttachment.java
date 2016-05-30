@@ -61,7 +61,7 @@ public final class AdminAttachment extends Attachment implements Interceptor {
 		//XXX: if the only thing this method does is to call Interceptor.consume,
 		// just add it to the abstract class O.o
 		
-		logger.debug("Consuming from buffer {}", buffer.toString());
+		logger.trace("Consuming from buffer {}", buffer.toString());
 		// Solo imprime en pantalla lo leído:
 		Interceptor.DEFAULT.consume(buffer);
 	}
