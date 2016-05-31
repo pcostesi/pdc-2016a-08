@@ -3,7 +3,10 @@
 
 	import java.io.IOException;
 
-	import ar.edu.itba.protos.transport.concrete.AdminAttachmentFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ar.edu.itba.protos.transport.concrete.AdminAttachmentFactory;
 	import ar.edu.itba.protos.transport.concrete.ForwardAttachmentFactory;
 	import ar.edu.itba.protos.transport.handler.AcceptHandler;
 	import ar.edu.itba.protos.transport.handler.ConnectHandler;
@@ -23,6 +26,10 @@
 		*/
 
 	public final class POP3Server {
+		private static final Logger logger = LoggerFactory.getLogger(POP3Server.class);
+		private static final String LISTEN_ADDR = "0.0.0.0";
+		private static int POP3_PORT = 110;
+		private static int ADMIN_PORT = 666;
 
 		/*
 		** Punto de entrada principal del servidor proxy POP-3.
@@ -56,21 +63,18 @@
 			** un 'binding' en cada dirección especificada:
 			*/
 			final Server pop3 = new Server()
-				.addListener("0.0.0.0", 110, forwardFactory)
-				.addListener("0.0.0.0", 666, adminFactory);
+				.addListener(LISTEN_ADDR, POP3_PORT, forwardFactory)
+				.addListener(LISTEN_ADDR, ADMIN_PORT, adminFactory);
 
 			try {
 
 				// Alguien, al menos, debe estar escuchando:
 				if (0 < pop3.getListeners()) {
-
 					pop3.dispatch();
 					pop3.shutdown();
 				}
-			}
-			catch (IOException exception) {
-
-				System.out.println(Message.CANNOT_RAISE);
+			} catch (IOException exception) {
+				logger.error(Message.CANNOT_RAISE);
 			}
 
 			// Quitar todos los manejadores del demultiplexor global:
