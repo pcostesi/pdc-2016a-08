@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.function.Predicate;
 
 import javax.inject.Singleton;
 import javax.xml.bind.JAXBContext;

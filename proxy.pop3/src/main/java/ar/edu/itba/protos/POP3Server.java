@@ -2,7 +2,6 @@
 package ar.edu.itba.protos;
 
 import java.io.IOException;
-import java.nio.file.NoSuchFileException;
 
 import javax.inject.Inject;
 
@@ -36,15 +35,15 @@ public final class POP3Server {
 	private final Server pop3;
 
 	@Inject
-	private POP3Server(Reactor demultiplexor, Server pop3) {
+	private POP3Server(final Reactor demultiplexor, final Server pop3) {
 		this.demultiplexor = demultiplexor;
 		this.pop3 = pop3;
 	}
 
-	
+
 	public void run() throws IOException {
-		
-		ProxyConfiguration config = ConfigurationLoader.getProxyConfig();
+
+		final ProxyConfiguration config = ConfigurationLoader.getProxyConfig();
 		/*
 		 ** Fábricas de 'attachments'. Cada servidor puede tener una fábrica
 		 * distinta en cada puerto de escucha (es decir, en cada 'listener'):
@@ -76,7 +75,7 @@ public final class POP3Server {
 				pop3.dispatch();
 				pop3.shutdown();
 			}
-		} catch (IOException exception) {
+		} catch (final IOException exception) {
 			logger.error(Message.CANNOT_RAISE);
 		}
 
