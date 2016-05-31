@@ -26,6 +26,7 @@ import ar.edu.itba.protos.transport.reactor.Reactor;
  * especificados, y genera eventos de forma no-bloqueante, los cuales son
  * despachados hacia un demultiplexor (implementado mediante un reactor).
  */
+// IF IT'S A GENERIC SERVER THEN WHY IS IT FINAL?!
 public final class Server {
 	private static final Logger logger = LoggerFactory.getLogger(Server.class);
 	
@@ -69,23 +70,15 @@ public final class Server {
 	 * petición de conexión. Devuelve 'true' si pudo agregar el canal.
 	 */
 
-	public Server addListener(InetSocketAddress address, Object attach) {
+	public Server addListener(InetSocketAddress address, Object attach) throws IOException {
 		logger.debug("Attaching listen socket {} to {}", address, attach);
-		try {
-			ServerSocketChannel channel = ServerSocketChannel.open();
-			channel.configureBlocking(false);
-			channel.socket().bind(address);
-			channel.register(selector, SelectionKey.OP_ACCEPT, attach);
+		ServerSocketChannel channel = ServerSocketChannel.open();
+		channel.configureBlocking(false);
+		channel.socket().bind(address);
+		channel.register(selector, SelectionKey.OP_ACCEPT, attach);
 
-			listeners.add(channel);
+		listeners.add(channel);
 
-		} catch (BindException exception) {
-			logger.error(Message.CANNOT_BIND, exception);
-		} catch (SocketException exception) {
-			logger.error(Message.UNRESOLVED_ADDRESS, exception);
-		} catch (IOException exception) {
-			logger.error(Message.CANNOT_LISTEN, exception);
-		}
 		return this;
 	}
 
@@ -95,7 +88,7 @@ public final class Server {
 	 * agregar el canal.
 	 */
 
-	public Server addListener(String IP, int port, Object attach) {
+	public Server addListener(String IP, int port, Object attach) throws IOException {
 
 		InetSocketAddress address = new InetSocketAddress(IP, port);
 		return addListener(address, attach);
