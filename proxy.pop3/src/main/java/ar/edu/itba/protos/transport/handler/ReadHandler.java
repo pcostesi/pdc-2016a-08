@@ -6,7 +6,10 @@
 	import java.nio.channels.SelectionKey;
 	import java.nio.channels.SocketChannel;
 
-	import ar.edu.itba.protos.transport.reactor.Event;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
 	import ar.edu.itba.protos.transport.support.Interceptor;
@@ -20,7 +23,8 @@
 		*/
 
 	public final class ReadHandler implements Handler {
-
+		private static final Logger logger = LoggerFactory.getLogger(ReadHandler.class);
+		
 		// Esta constante indica que el stream se ha cerrado:
 		private static final int BROKEN_PIPE = -1;
 
@@ -31,7 +35,7 @@
 
 		public void handle(SelectionKey key) {
 
-			/**/System.out.println("> Read (" + key + ")");
+			logger.debug("> Read ({})", key);
 
 			Attachment attachment = (Attachment) key.attachment();
 			ByteBuffer buffer = attachment.getInboundBuffer();
@@ -80,7 +84,7 @@
 			}
 			catch (IOException exception) {
 
-				System.out.println(Message.UNKNOWN);
+				logger.error("Handling message failed with code {}", Message.UNKNOWN, exception);
 			}
 		}
 

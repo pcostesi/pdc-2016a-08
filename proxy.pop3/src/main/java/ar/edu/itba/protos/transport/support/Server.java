@@ -1,58 +1,58 @@
 
-	package ar.edu.itba.protos.transport.support;
+package ar.edu.itba.protos.transport.support;
 
-	import java.io.IOException;
-	import java.net.BindException;
-	import java.net.InetSocketAddress;
-	import java.net.SocketException;
-	import java.nio.channels.Channel;
-	import java.nio.channels.SelectionKey;
-	import java.nio.channels.Selector;
-	import java.nio.channels.ServerSocketChannel;
-	import java.util.ArrayList;
-	import java.util.Iterator;
-	import java.util.List;
-	import java.util.Set;
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.channels.Channel;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.ServerSocketChannel;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
-	import ar.edu.itba.protos.transport.reactor.Reactor;
+import javax.inject.Inject;
 
-		/**
-		* Un servidor genérico recibe conexiones entrantes en
-		* las direcciones y puertos especificados, y genera eventos
-		* de forma no-bloqueante, los cuales son despachados hacia
-		* un demultiplexor (implementado mediante un reactor).
-		*/
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-	public final class Server {
+import ar.edu.itba.protos.transport.reactor.Reactor;
 
-		// TODO: Obtener por configuración estas 2 constantes:
-		private static final long TIMEOUT = 10000;
+/**
+ * Un servidor recibe conexiones entrantes en las direcciones y puertos
+ * especificados, y genera eventos de forma no-bloqueante, los cuales son
+ * despachados hacia un demultiplexor (implementado mediante un reactor).
+ */
 
-		// Cada cuánto se monitorean los canales inactivos:
-		private static final long LAZY_DETECTION_INTERVAL = 1000;
+public final class Server {
 
-		// Demultiplexador de eventos generados:
-		private static final Reactor demultiplexor
-			= Reactor.getInstance();
+	private static final Logger logger = LoggerFactory.getLogger(Server.class);
 
-		// Watchdog-timer utilizado para cerrar canales inactivos:
-		private final WatchdogTimer watchdog
-			= new WatchdogTimer(TIMEOUT);
+	// TODO: obtener por configuración Pablo!!!
+	private static final long TIMEOUT = 10000;
+	private static final long LAZY_DETECTION_INTERVAL = 1000;
 
-		// Generador de eventos:
-		private Selector selector = null;
+	// Watchdog-timer utilizado para cerrar canales inactivos:
+	private final WatchdogTimer watchdog
+		= new WatchdogTimer(TIMEOUT);
 
-		// Lista de sockets escuchando conexiones entrantes:
-		private List<ServerSocketChannel> listeners = null;
+	// Generador de eventos:
+	private Selector selector;
 
-		public Server() {
+	// Lista de sockets escuchando conexiones entrantes:
+	private List<ServerSocketChannel> listeners = null;
 
-			try {
+	// Demultiplexador de eventos generados:
+	private final Reactor demultiplexor;
 
-				selector = Selector.open();
-				listeners = new ArrayList<ServerSocketChannel>();
-			}
-			catch (IOException exception) {
+	@Inject
+	public Server(Reactor demultiplexor) {
+		this.demultiplexor = demultiplexor;
+		try {
+			selector = Selector.open();
+			listeners = new ArrayList<ServerSocketChannel>();
+		} catch (IOException exception) {
 
 				exception.printStackTrace();
 			}
@@ -78,30 +78,18 @@
 		** Devuelve 'true' si pudo agregar el canal.
 		*/
 
-		public Server addListener(InetSocketAddress address, Object attach) {
+		public Server addListener(InetSocketAddress address, Object attach)
+				throws IOException {
 
-			try {
+			logger.debug("Attaching listen socket {} to {}", address, attach);
 
-				ServerSocketChannel channel = ServerSocketChannel.open();
-				channel.configureBlocking(false);
-				channel.socket().bind(address);
-				channel.register(selector, SelectionKey.OP_ACCEPT, attach);
+			ServerSocketChannel channel = ServerSocketChannel.open();
+			channel.configureBlocking(false);
+			channel.socket().bind(address);
+			channel.register(selector, SelectionKey.OP_ACCEPT, attach);
 
-				// Si todo funcionó, agrego el nuevo canal:
-				listeners.add(channel);
-			}
-			catch (BindException exception) {
+			listeners.add(channel);
 
-				System.out.println(Message.CANNOT_BIND);
-			}
-			catch (SocketException exception) {
-
-				System.out.println(Message.UNRESOLVED_ADDRESS);
-			}
-			catch (IOException exception) {
-
-				System.out.println(Message.CANNOT_LISTEN);
-			}
 			return this;
 		}
 
@@ -111,7 +99,8 @@
 		** Devuelve 'true' si pudo agregar el canal.
 		*/
 
-		public Server addListener(String IP, int port, Object attach) {
+		public Server addListener(String IP, int port, Object attach)
+				throws IOException {
 
 			InetSocketAddress address = new InetSocketAddress(IP, port);
 			return addListener(address, attach);
@@ -147,7 +136,8 @@
 							watchdog.addActivity(key);
 						}
 
-						/**/System.out.println("> Select (" + key + ")");
+						// Habría que sacar esto, eventualmente...
+						logger.trace("> Select ({})", key);
 
 						// Solicito que un manejador resuelva el evento:
 						demultiplexor.dispatch(key);

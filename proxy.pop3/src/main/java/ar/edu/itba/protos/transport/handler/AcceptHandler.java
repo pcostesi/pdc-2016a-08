@@ -6,7 +6,10 @@
 	import java.nio.channels.ServerSocketChannel;
 	import java.nio.channels.SocketChannel;
 
-	import ar.edu.itba.protos.transport.reactor.Handler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
 	import ar.edu.itba.protos.transport.support.AttachmentFactory;
 	import ar.edu.itba.protos.transport.support.Message;
@@ -20,15 +23,15 @@
 		*/
 
 	public final class AcceptHandler implements Handler {
-
+		private final static Logger logger = LoggerFactory.getLogger(AcceptHandler.class);
+		
 		/*
 		** Procesa el evento para el cual está subscripto. En este
 		** caso, el evento es de aceptación.
 		*/
-
 		public void handle(SelectionKey key) {
 
-			/**/System.out.println("> Accept (" + key + ")");
+			logger.debug("> Accept ({})", key);
 
 			try {
 
@@ -55,7 +58,7 @@
 			}
 			catch (IOException exception) {
 
-				System.out.println(Message.UNKNOWN);
+				logger.error(Message.UNKNOWN, exception);
 			}
 		}
 

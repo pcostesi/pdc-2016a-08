@@ -9,6 +9,8 @@
 
 	public interface Message {
 
+		// XXX: THIS SHOULD BE AN ENUM
+		
 		/*
 		** Errores asociados a la exposición de un servidor:
 		*/
