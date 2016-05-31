@@ -3,6 +3,7 @@ package ar.edu.itba.protos.transport.support;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.channels.CancelledKeyException;
 import java.nio.channels.Channel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
@@ -192,6 +193,10 @@ public final class Server {
 
 		private boolean isListener(SelectionKey key) {
 
-			return 0 != (key.interestOps() & SelectionKey.OP_ACCEPT);
+			try {
+				return 0 != (key.interestOps() & SelectionKey.OP_ACCEPT);
+			} catch (CancelledKeyException exception) {
+				return false;
+			}
 		}
 	}
