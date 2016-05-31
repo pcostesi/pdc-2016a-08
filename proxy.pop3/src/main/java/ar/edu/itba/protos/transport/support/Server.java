@@ -14,6 +14,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Inject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ar.edu.itba.protos.transport.reactor.Reactor;
 
 /**
@@ -21,9 +26,10 @@ import ar.edu.itba.protos.transport.reactor.Reactor;
  * especificados, y genera eventos de forma no-bloqueante, los cuales son
  * despachados hacia un demultiplexor (implementado mediante un reactor).
  */
-
+// IF IT'S A GENERIC SERVER THEN WHY IS IT FINAL?!
 public final class Server {
-
+	private static final Logger logger = LoggerFactory.getLogger(Server.class);
+	
 	// Generador de eventos:
 	private Selector selector;
 
@@ -31,12 +37,12 @@ public final class Server {
 	private List<ServerSocketChannel> listeners = null;
 
 	// Demultiplexador de eventos generados:
-	private final Reactor demultiplexor = Reactor.getInstance();
+	private final Reactor demultiplexor;
 
-	public Server() {
-
+	@Inject
+	public Server(Reactor demultiplexor) {
+		this.demultiplexor = demultiplexor;
 		try {
-
 			selector = Selector.open();
 			listeners = new ArrayList<ServerSocketChannel>();
 		} catch (IOException exception) {
@@ -64,27 +70,15 @@ public final class Server {
 	 * petición de conexión. Devuelve 'true' si pudo agregar el canal.
 	 */
 
-	public Server addListener(InetSocketAddress address, Object attach) {
+	public Server addListener(InetSocketAddress address, Object attach) throws IOException {
+		logger.debug("Attaching listen socket {} to {}", address, attach);
+		ServerSocketChannel channel = ServerSocketChannel.open();
+		channel.configureBlocking(false);
+		channel.socket().bind(address);
+		channel.register(selector, SelectionKey.OP_ACCEPT, attach);
 
-		try {
+		listeners.add(channel);
 
-			ServerSocketChannel channel = ServerSocketChannel.open();
-			channel.configureBlocking(false);
-			channel.socket().bind(address);
-			channel.register(selector, SelectionKey.OP_ACCEPT, attach);
-
-			// Si todo funcionó, agrego el nuevo canal:
-			listeners.add(channel);
-		} catch (BindException exception) {
-
-			System.out.println(Message.CANNOT_BIND);
-		} catch (SocketException exception) {
-
-			System.out.println(Message.UNRESOLVED_ADDRESS);
-		} catch (IOException exception) {
-
-			System.out.println(Message.CANNOT_LISTEN);
-		}
 		return this;
 	}
 
@@ -94,7 +88,7 @@ public final class Server {
 	 * agregar el canal.
 	 */
 
-	public Server addListener(String IP, int port, Object attach) {
+	public Server addListener(String IP, int port, Object attach) throws IOException {
 
 		InetSocketAddress address = new InetSocketAddress(IP, port);
 		return addListener(address, attach);
@@ -119,18 +113,14 @@ public final class Server {
 				Iterator<SelectionKey> iterator = keys.iterator();
 
 				while (iterator.hasNext()) {
-
 					SelectionKey key = iterator.next();
-					System.out.println("> Select (" + key + ")");
-
+					logger.trace("> Select ({})", key);
 					// Solicito que un manejador resuelva el evento:
 					demultiplexor.dispatch(key);
-
 					iterator.remove();
 				}
 			} else {
-
-				System.out.println("Selector Timeout");
+				logger.trace("Selector Timeout");
 				return;
 			}
 		}
