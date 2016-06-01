@@ -21,7 +21,9 @@ import ar.edu.itba.protos.transport.reactor.Event;
  */
 
 public abstract class Attachment {
-	private final static Logger logger = LoggerFactory.getLogger(Attachment.class);
+
+	private final static Logger logger
+		= LoggerFactory.getLogger(Attachment.class);
 	
 	// Canal asociado a este 'attachment':
 	protected SelectionKey downstream = null;
@@ -212,24 +214,50 @@ public abstract class Attachment {
 	 */
 
 	public SelectionKey addStream(SocketAddress address, Attachment attachment) {
+
 		try {
 
 			SocketChannel socket = SocketChannel.open();
 
 			// Registro el canal en el selector:
-			SelectionKey key = socket.configureBlocking(false).register(getDownstream().selector(),
-					SelectionKey.OP_CONNECT, attachment);
+			SelectionKey key = socket
+				.configureBlocking(false)
+				.register(
+					getDownstream().selector(),
+					SelectionKey.OP_CONNECT,
+					attachment);
 
 			// Especifico la clave del nuevo stream:
 			attachment.setDownstream(key);
 
-			if (!socket.connect(address)) {
-				// La conexión no ha finalizado
-				return key;
+			// NO TOCAR!!!!
+			if (socket.connect(address)) {
+
+				/* En este caso la conexión se efectuó
+				 * instantáneamente, y todavía no fue testeado
+				 * que sucede en este caso con las claves
+				 * seleccionadas.
+				 */
 			}
-		} catch (UnresolvedAddressException | IOException exception) {
-			logger.error("Error connecting to addr {} with attachment {}",
-					address, attachment, exception);
+			else {
+
+				/* Este es el caso que en general se espera,
+				 * en el cual se requiere una resolución por
+				 * DNS, lo cual es más lento. Luego se procesa
+				 * a través de ConnectHandler.
+				 */
+			}
+
+			// SIEMPRE!!! devolver la clave...
+			return key;
+		}
+		catch (UnresolvedAddressException | IOException exception) {
+
+			logger.error(
+				"Error connecting to addr {} with attachment {}",
+				address,
+				attachment,
+				exception);
 		}
 		return null;
 	}
