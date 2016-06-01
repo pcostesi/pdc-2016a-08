@@ -2,7 +2,6 @@
 package ar.edu.itba.protos;
 
 import java.io.IOException;
-import java.nio.file.NoSuchFileException;
 
 import javax.inject.Inject;
 
@@ -31,56 +30,55 @@ import ar.edu.itba.protos.transport.support.Server;
  */
 
 public final class POP3Server {
-	private static final Logger logger = LoggerFactory.getLogger(POP3Server.class);
-	private final Reactor demultiplexor;
-	private final Server pop3;
+    private static final Logger logger = LoggerFactory.getLogger(POP3Server.class);
+    private final Reactor demultiplexor;
+    private final Server pop3;
 
-	@Inject
-	private POP3Server(Reactor demultiplexor, Server pop3) {
-		this.demultiplexor = demultiplexor;
-		this.pop3 = pop3;
-	}
+    @Inject
+    private POP3Server(final Reactor demultiplexor, final Server pop3) {
+        this.demultiplexor = demultiplexor;
+        this.pop3 = pop3;
+    }
 
-	
-	public void run() throws IOException {
-		
-		ProxyConfiguration config = ConfigurationLoader.getProxyConfig();
-		/*
-		 ** Fábricas de 'attachments'. Cada servidor puede tener una fábrica
-		 * distinta en cada puerto de escucha (es decir, en cada 'listener'):
-		 */
-		final AttachmentFactory forwardFactory = new ForwardAttachmentFactory();
+    public void run() throws IOException {
 
-		final AttachmentFactory adminFactory = new AdminAttachmentFactory();
+        final ProxyConfiguration config = ConfigurationLoader.getProxyConfig();
+        /*
+         ** Fábricas de 'attachments'. Cada servidor puede tener una fábrica
+         * distinta en cada puerto de escucha (es decir, en cada 'listener'):
+         */
+        final AttachmentFactory forwardFactory = new ForwardAttachmentFactory();
 
-		/*
-		 ** Se instalan los manejadores (Handlers) en el demultiplexador de
-		 * eventos global:
-		 */
-		demultiplexor.add(new AcceptHandler(), Event.ACCEPT)
-			.add(new ReadHandler(), Event.READ)
-			.add(new WriteHandler(), Event.WRITE)
-			.add(new ConnectHandler(), Event.CONNECT);
+        final AttachmentFactory adminFactory = new AdminAttachmentFactory();
 
-		/*
-		 ** Se instancia un nuevo servidor y se aplica un 'binding' en cada
-		 * dirección especificada:
-		 */
-		pop3.addListener(config.getListenAddr(), config.getListenPort(), forwardFactory)
-			.addListener(config.getAdminListenAddr(), config.getAdminListenPort(), adminFactory);
+        /*
+         ** Se instalan los manejadores (Handlers) en el demultiplexador de
+         * eventos global:
+         */
+        demultiplexor.add(new AcceptHandler(), Event.ACCEPT)
+                .add(new ReadHandler(), Event.READ)
+                .add(new WriteHandler(), Event.WRITE)
+                .add(new ConnectHandler(), Event.CONNECT);
 
-		try {
+        /*
+         ** Se instancia un nuevo servidor y se aplica un 'binding' en cada
+         * dirección especificada:
+         */
+        pop3.addListener(config.getListenAddr(), config.getListenPort(), forwardFactory)
+        .addListener(config.getAdminListenAddr(), config.getAdminListenPort(), adminFactory);
 
-			// Alguien, al menos, debe estar escuchando:
-			if (0 < pop3.getListeners()) {
-				pop3.dispatch();
-				pop3.shutdown();
-			}
-		} catch (IOException exception) {
-			logger.error(Message.CANNOT_RAISE);
-		}
+        try {
 
-		// Quitar todos los manejadores del demultiplexor global:
-		demultiplexor.unplug();
-	}
+            // Alguien, al menos, debe estar escuchando:
+            if (0 < pop3.getListeners()) {
+                pop3.dispatch();
+                pop3.shutdown();
+            }
+        } catch (final IOException exception) {
+            logger.error(Message.CANNOT_RAISE);
+        }
+
+        // Quitar todos los manejadores del demultiplexor global:
+        demultiplexor.unplug();
+    }
 }
