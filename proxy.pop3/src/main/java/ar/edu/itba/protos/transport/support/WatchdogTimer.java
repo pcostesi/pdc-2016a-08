@@ -122,7 +122,10 @@
 			if (channel.isOpen()) {
 
 				try {channel.close();}
-				catch (IOException spurious) {}
+				catch (IOException spurious) {
+
+					// Suprimir la excepción
+				}
 			}
 		}
 

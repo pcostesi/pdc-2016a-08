@@ -12,7 +12,6 @@
 	import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
-	import ar.edu.itba.protos.transport.support.Interceptor;
 	import ar.edu.itba.protos.transport.support.Message;
 
 		/**
@@ -24,6 +23,7 @@
 
 	public final class ReadHandler implements Handler {
 
+		// Logger:
 		private static final Logger logger
 			= LoggerFactory.getLogger(ReadHandler.class);
 
@@ -37,7 +37,7 @@
 
 		public void handle(SelectionKey key) {
 
-			logger.debug("> Read ({})", key);
+			logger.debug("Read ({})", key);
 
 			Attachment attachment = (Attachment) key.attachment();
 			ByteBuffer buffer = attachment.getInboundBuffer();
@@ -55,7 +55,7 @@
 					buffer.position(position);
 
 					// Consumo el flujo de bytes entrante:
-					getInterceptor(attachment).consume(buffer);
+					attachment.getInterceptor().consume(buffer);
 
 					// Backtracking (no recuerda el límite):
 					buffer.position(position);
@@ -73,37 +73,23 @@
 						Event.disable(key, SelectionKey.OP_READ);
 					}
 				}
-				else {
-
-					// Desconecto el 'downstream':
-					attachment.closeDownstream();
-					attachment.setDownstream(null);
-					attachment.onUnplug(Event.READ);
-
-					// Si hay información para enviar, abro el 'upstream':
-					detectInbound(attachment);
-				}
+				else throw new IOException();
 			}
 			catch (IOException exception) {
 
 				logger.error(
 					"Handling message failed with code {}",
-					Message.UNKNOWN,
+					Message.CLIENT_UNPLUGGED,
 					exception);
+
+				// Desconecto el 'downstream':
+				attachment.closeDownstream();
+				attachment.setDownstream(null);
+				attachment.onUnplug(Event.READ);
+
+				// Si hay información para enviar, abro el 'upstream':
+				detectInbound(attachment);
 			}
-		}
-
-		/*
-		** Intenta obtener un 'interceptor' del 'attachment' sobre
-		** el canal por el cual se está leyendo. Si no existe uno, se
-		** devuelve uno por defecto (que no hace nada).
-		*/
-
-		private Interceptor getInterceptor(Attachment attachment) {
-
-			Interceptor interceptor = attachment.getInterceptor();
-			if (interceptor != null) return interceptor;
-			else return Interceptor.DEFAULT;
 		}
 
 		/*

@@ -20,9 +20,9 @@
 		WRITE		(SelectionKey.OP_WRITE);
 
 		// La máscara que identifica el evento:
-		private int options;
+		private final int options;
 
-		private Event(int options) {
+		private Event(final int options) {
 
 			this.options = options;
 		}

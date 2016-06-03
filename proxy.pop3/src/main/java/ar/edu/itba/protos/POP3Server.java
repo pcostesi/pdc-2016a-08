@@ -75,7 +75,7 @@ public final class POP3Server {
                 pop3.shutdown();
             }
         } catch (final IOException exception) {
-            logger.error(Message.CANNOT_RAISE);
+            logger.error(Message.CANNOT_RAISE.getMessage());
         }
 
         // Quitar todos los manejadores del demultiplexor global:

@@ -25,6 +25,7 @@
 
 	public final class WriteHandler implements Handler {
 
+		// Logger:
 		private final static Logger logger
 			= LoggerFactory.getLogger(WriteHandler.class);
 
@@ -35,7 +36,7 @@
 
 		public void handle(SelectionKey key) {
 
-			logger.debug("> Write ({})", key);
+			logger.debug("Write ({})", key);
 
 			Attachment attachment = (Attachment) key.attachment();
 			ByteBuffer buffer = attachment.getOutboundBuffer();
@@ -75,7 +76,7 @@
 
 				logger.error(
 					"Handle failed with code {}",
-					Message.UNKNOWN,
+					Message.SERVER_UNPLUGGED,
 					exception);
 
 				// Desconecto el 'downstream':
