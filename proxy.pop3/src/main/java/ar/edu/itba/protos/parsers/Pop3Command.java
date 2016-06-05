@@ -14,6 +14,7 @@ public enum Pop3Command {
 	QUIT,
 	UIDL,
 	RETR,
+	CAPA,
 	ERR;
 
 }
