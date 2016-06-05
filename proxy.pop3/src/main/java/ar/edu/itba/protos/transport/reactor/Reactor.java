@@ -70,7 +70,7 @@
 		** verifica que la clave sea válida.
 		*/
 
-		public boolean isOn(Event event, SelectionKey key) {
+		public static boolean isOn(Event event, SelectionKey key) {
 
 			return key.isValid()
 				&& 0 != (event.getOptions() & key.readyOps());
