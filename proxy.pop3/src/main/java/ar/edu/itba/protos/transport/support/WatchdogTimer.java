@@ -171,6 +171,7 @@
 				** corresponde con las definiciones usuales
 				** por motivos de performance.
 				*/
+				if (obj == null) return false;
 				Activity activity = (Activity) obj;
 				return key.equals(activity.key);
 			}
