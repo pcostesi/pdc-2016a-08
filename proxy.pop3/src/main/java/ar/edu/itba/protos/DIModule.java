@@ -2,6 +2,7 @@ package ar.edu.itba.protos;
 
 import com.google.inject.AbstractModule;
 
+import ar.edu.itba.protos.transport.metrics.Metrics;
 import ar.edu.itba.protos.transport.support.Server;
 
 /**
@@ -14,6 +15,7 @@ public class DIModule extends AbstractModule {
     protected void configure() {
         bind(POP3Server.class);
         bind(Server.class);
+        bind(Metrics.class);
     }
 
 }
