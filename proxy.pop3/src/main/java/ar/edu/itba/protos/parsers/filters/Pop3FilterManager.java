@@ -4,9 +4,11 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import ar.edu.itba.protos.parsers.Pop3Command;
+
 public class Pop3FilterManager {
 
-	private static final int smallestCommand = 5; //Would be TOP
+	private static final int smallestCommand = 5; // Would be TOP
 	private List<Pop3CommandFilter> filterChain = new ArrayList<Pop3CommandFilter>();
 
 	public Pop3FilterManager() {
@@ -30,6 +32,9 @@ public class Pop3FilterManager {
 			if (fil.filter(buff, result)) {
 				break;
 			}
+		}
+		if (result.getCommand() == Pop3Command.ERR) {
+			result.skipParams(buff);
 		}
 		return result;
 	}

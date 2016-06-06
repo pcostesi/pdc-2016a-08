@@ -14,7 +14,6 @@ public class FilterManagerTests {
 
 	private final Pop3FilterManager parser = new Pop3FilterManager();
 
-
 	@Test
 	public void sendShortCommandTest() {
 		String commandToTest = "";
@@ -104,9 +103,8 @@ public class FilterManagerTests {
 	public void parseWrongSpaceTest() {
 		String commandToTest = "USERJuansito\r\n";
 		ByteBuffer buffer = ByteBuffer.wrap(commandToTest.getBytes());
-		int initial = buffer.position();
 		ParsedCommand result = parser.filter(buffer);
-		assertTrue(result.getStatus() == CommandStatus.UNCHECKED && result.getCommand() == Pop3Command.ERR && initial == buffer.position());
+		assertTrue(result.getStatus() == CommandStatus.COMPLETE && result.getCommand() == Pop3Command.ERR);
 	}
 
 	@Test
@@ -114,9 +112,9 @@ public class FilterManagerTests {
 		String commandToTest = "CMDD FakeCommandou";
 		ByteBuffer buffer = ByteBuffer.wrap(commandToTest.getBytes());
 		ParsedCommand result = parser.filter(buffer);
-		assertTrue(result.getStatus() == CommandStatus.UNCHECKED && result.getCommand() == Pop3Command.ERR);
+		assertTrue(result.getStatus() == CommandStatus.INCOMPLETE && result.getCommand() == Pop3Command.ERR);
 	}
-	
+
 	@Test
 	public void CapaTest() {
 		String commandToTest = "CAPA\r\n";
@@ -124,9 +122,8 @@ public class FilterManagerTests {
 		ParsedCommand result = parser.filter(buffer);
 		assertTrue(result.getStatus() == CommandStatus.COMPLETE && result.getCommand() == Pop3Command.CAPA);
 	}
-	
-	
-	/*Placed here to avoid visual spamm*/
+
+	/* Placed here to avoid visual spamm */
 	private final String superLongString = "THISISAVERASJDBJBSAKJBSADKJSDKSAKJASHJKDBASDYSBDAKJSKJSABJKBDJKASBJKBSDKJBDKDKJSKJ"
 			+ "DAKJSDSADSAKJTHISISAVERASJDBJBSAKJBSADKJSDKSAKJASHJKDBASDYSBDAKJSKJSABJKBDJKASBJKBSDKJBDKDKJSKJDAKJSDSADSAKJTHI"
 			+ "SISAVERASJDBJBSAKJBSADKJSDKSAKJASHJKDBASDYSBDAKJSKJSABJKBDJKASBJKBSDKJBDKDKJSKJDAKJSDSADSAKJTHISISAVERASJDBJBSA"
