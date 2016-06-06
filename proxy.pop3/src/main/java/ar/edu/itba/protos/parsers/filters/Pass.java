@@ -12,9 +12,9 @@ public class Pass implements Pop3CommandFilter {
 		byte caps[] = { 'P', 'A', 'S', 'S' };
 		byte min[] = { 'p', 'a', 's', 's' };
 		boolean match = false;
-		int index = 0;
+		int index = 0, initial = buff.position();
 		byte b;
-		
+
 		if (buff.remaining() >= 6) {
 			match = true;
 			while (index < 4) {
@@ -27,14 +27,14 @@ public class Pass implements Pop3CommandFilter {
 			if (index == 4 && match) {
 				b = buff.get();
 				if (b == ' ') {
-					result.skipParams(buff); //al proxy no le interesan
+					result.skipParams(buff); // al proxy no le interesan
 					result.setCommand(Pop3Command.PASS);
 				}
-			} else {
-				buff.position(buff.position() - index);
-				match = false;
 			}
-
+		}
+		if (result.getCommand() != Pop3Command.PASS) {
+			buff.position(initial);
+			match = false;
 		}
 		return match;
 	}

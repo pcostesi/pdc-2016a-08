@@ -12,6 +12,7 @@ public class Quit implements Pop3CommandFilter {
 		byte caps[] = { 'Q', 'U', 'I', 'T' };
 		byte min[] = { 'q', 'u', 'i', 't' };
 		boolean match = false;
+		int initial = buff.position();
 		int index = 0;
 		byte b;
 
@@ -31,11 +32,11 @@ public class Quit implements Pop3CommandFilter {
 					result.setStatus(CommandStatus.COMPLETE);
 				}
 
-			} else {
-				buff.position(buff.position() - index);
-				match = false;
 			}
-
+		}
+		if (result.getCommand() != Pop3Command.QUIT) {
+			buff.position(initial);
+			match = false;
 		}
 		return match;
 	}

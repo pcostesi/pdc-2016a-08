@@ -12,7 +12,7 @@ public class User implements Pop3CommandFilter {
 		byte caps[] = { 'U', 'S', 'E', 'R' };
 		byte min[] = { 'u', 's', 'e', 'r' };
 		boolean match = false;
-		int index = 0;
+		int index = 0, initial = buff.position();
 		byte b;
 
 		if (buff.remaining() >= 5) {
@@ -25,16 +25,17 @@ public class User implements Pop3CommandFilter {
 				index++;
 			}
 			if (index == 4 && match) {
-					b = buff.get();
-					if (b == ' ') {
-						result.extractParams(buff);
-						result.setCommand(Pop3Command.USER);
-					}
-			} else {
-				buff.position(buff.position() - index);
-				match = false;
+				b = buff.get();
+				if (b == ' ') {
+					result.extractParams(buff);
+					result.setCommand(Pop3Command.USER);
+				}
 			}
 
+		}
+		if (result.getCommand() != Pop3Command.USER) {
+			buff.position(initial);
+			match = false;
 		}
 		return match;
 	}

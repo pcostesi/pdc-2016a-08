@@ -83,7 +83,8 @@ public class ParsedCommand {
 
 		while (buff.hasRemaining() && !endFound && count < maxCommandSize) {
 			c = buff.get();
-			if (c == '\r' && buff.hasRemaining() && buff.get() == '\n') {
+			if (c == '\r' && buff.hasRemaining() && buff.get(buff.position()) == '\n') {
+				buff.get();
 				endFound = true;
 			}
 			count++;

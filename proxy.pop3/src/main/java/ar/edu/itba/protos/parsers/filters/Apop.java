@@ -13,6 +13,7 @@ public class Apop implements Pop3CommandFilter {
 		byte min[] = { 'a', 'p', 'o', 'p' };
 		boolean match = false;
 		int index = 0;
+		int initial = buff.position();
 		byte b;
 
 		if (buff.remaining() >= 6) {
@@ -30,11 +31,11 @@ public class Apop implements Pop3CommandFilter {
 					result.extractParams(buff);
 					result.setCommand(Pop3Command.APOP);
 				}
-			} else {
-				buff.position(buff.position() - index);
-				match = false;
 			}
-
+		}
+		if (result.getCommand() != Pop3Command.APOP) {
+			buff.position(initial);
+			match = false;
 		}
 		return match;
 	}

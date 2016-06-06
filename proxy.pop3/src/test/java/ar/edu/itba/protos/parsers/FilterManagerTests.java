@@ -104,8 +104,9 @@ public class FilterManagerTests {
 	public void parseWrongSpaceTest() {
 		String commandToTest = "USERJuansito\r\n";
 		ByteBuffer buffer = ByteBuffer.wrap(commandToTest.getBytes());
+		int initial = buffer.position();
 		ParsedCommand result = parser.filter(buffer);
-		assertTrue(result.getStatus() == CommandStatus.UNCHECKED && result.getCommand() == Pop3Command.ERR);
+		assertTrue(result.getStatus() == CommandStatus.UNCHECKED && result.getCommand() == Pop3Command.ERR && initial == buffer.position());
 	}
 
 	@Test

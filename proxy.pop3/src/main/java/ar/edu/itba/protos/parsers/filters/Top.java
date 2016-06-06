@@ -12,7 +12,7 @@ public class Top implements Pop3CommandFilter {
 		byte caps[] = { 'T', 'O', 'P' };
 		byte min[] = { 't', 'o', 'p' };
 		boolean match = false;
-		int index = 0;
+		int index = 0, initial = buff.position();
 		byte b;
 
 		if (buff.remaining() >= 5) {
@@ -27,14 +27,14 @@ public class Top implements Pop3CommandFilter {
 			if (index == 3 && match) {
 				b = buff.get();
 				if (b == ' ') {
-					result.skipParams(buff); //al proxy no le interesan
+					result.skipParams(buff); // al proxy no le interesan
 					result.setCommand(Pop3Command.PASS);
 				}
-			} else {
-				buff.position(buff.position() - index);
-				match = false;
 			}
-
+		}
+		if (result.getCommand() != Pop3Command.TOP) {
+			buff.position(initial);
+			match = false;
 		}
 		return match;
 	}
