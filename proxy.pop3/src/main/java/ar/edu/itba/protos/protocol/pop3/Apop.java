@@ -1,23 +1,22 @@
-package ar.edu.itba.protos.parsers.filters;
+package ar.edu.itba.protos.protocol.pop3;
 
 import java.nio.ByteBuffer;
 
-import ar.edu.itba.protos.parsers.Pop3Command;
-
-public class User implements Pop3CommandFilter {
+public class Apop implements Pop3CommandFilter {
 
 	@Override
 	public boolean filter(ByteBuffer buff, ParsedCommand result) {
 
-		byte caps[] = { 'U', 'S', 'E', 'R' };
-		byte min[] = { 'u', 's', 'e', 'r' };
+		byte caps[] = { 'A', 'P', 'O', 'P' };
+		byte min[] = { 'a', 'p', 'o', 'p' };
 		boolean match = false;
-		int index = 0, initial = buff.position();
+		int index = 0;
+		int initial = buff.position();
 		byte b;
 
-		if (buff.remaining() >= 5) {
+		if (buff.remaining() >= 6) {
 			match = true;
-			while (buff.hasRemaining() && index < 4) {
+			while (index < 4) {
 				b = buff.get();
 				if (!(b == caps[index] || b == min[index])) {
 					match = false;
@@ -28,16 +27,14 @@ public class User implements Pop3CommandFilter {
 				b = buff.get();
 				if (b == ' ') {
 					result.extractParams(buff);
-					result.setCommand(Pop3Command.USER);
+					result.setCommand(Pop3Command.APOP);
 				}
 			}
-
 		}
-		if (result.getCommand() != Pop3Command.USER) {
+		if (result.getCommand() != Pop3Command.APOP) {
 			buff.position(initial);
 			match = false;
 		}
 		return match;
 	}
-
 }

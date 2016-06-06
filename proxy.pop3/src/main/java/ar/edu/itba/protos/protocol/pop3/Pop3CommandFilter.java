@@ -1,4 +1,4 @@
-package ar.edu.itba.protos.parsers.filters;
+package ar.edu.itba.protos.protocol.pop3;
 
 import java.nio.ByteBuffer;
 

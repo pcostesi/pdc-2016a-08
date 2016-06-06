@@ -6,9 +6,10 @@ import java.nio.ByteBuffer;
 
 import org.junit.Test;
 
-import ar.edu.itba.protos.parsers.filters.CommandStatus;
-import ar.edu.itba.protos.parsers.filters.ParsedCommand;
-import ar.edu.itba.protos.parsers.filters.Pop3FilterManager;
+import ar.edu.itba.protos.protocol.pop3.CommandStatus;
+import ar.edu.itba.protos.protocol.pop3.ParsedCommand;
+import ar.edu.itba.protos.protocol.pop3.Pop3Command;
+import ar.edu.itba.protos.protocol.pop3.Pop3FilterManager;
 
 public class FilterManagerTests {
 

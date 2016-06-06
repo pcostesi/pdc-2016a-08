@@ -1,4 +1,4 @@
-package ar.edu.itba.protos.parsers;
+package ar.edu.itba.protos.protocol.pop3;
 
 public enum Pop3Command {
 

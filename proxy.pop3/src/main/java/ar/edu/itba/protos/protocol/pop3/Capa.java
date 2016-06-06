@@ -1,8 +1,6 @@
-package ar.edu.itba.protos.parsers.filters;
+package ar.edu.itba.protos.protocol.pop3;
 
 import java.nio.ByteBuffer;
-
-import ar.edu.itba.protos.parsers.Pop3Command;
 
 public class Capa implements Pop3CommandFilter {
 

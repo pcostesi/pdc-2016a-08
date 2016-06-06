@@ -1,19 +1,16 @@
-package ar.edu.itba.protos.parsers.filters;
+package ar.edu.itba.protos.protocol.pop3;
 
 import java.nio.ByteBuffer;
 
-import ar.edu.itba.protos.parsers.Pop3Command;
-
-public class Apop implements Pop3CommandFilter {
+public class Retr implements Pop3CommandFilter {
 
 	@Override
 	public boolean filter(ByteBuffer buff, ParsedCommand result) {
 
-		byte caps[] = { 'A', 'P', 'O', 'P' };
-		byte min[] = { 'a', 'p', 'o', 'p' };
+		byte caps[] = { 'R', 'E', 'T', 'R' };
+		byte min[] = { 'r', 'e', 't', 'r' };
 		boolean match = false;
-		int index = 0;
-		int initial = buff.position();
+		int index = 0, initial = buff.position();
 		byte b;
 
 		if (buff.remaining() >= 6) {
@@ -28,12 +25,13 @@ public class Apop implements Pop3CommandFilter {
 			if (index == 4 && match) {
 				b = buff.get();
 				if (b == ' ') {
-					result.extractParams(buff);
-					result.setCommand(Pop3Command.APOP);
+					result.skipParams(buff); // al proxy no le interesan
+					result.setCommand(Pop3Command.RETR);
 				}
 			}
+
 		}
-		if (result.getCommand() != Pop3Command.APOP) {
+		if (result.getCommand() != Pop3Command.RETR) {
 			buff.position(initial);
 			match = false;
 		}

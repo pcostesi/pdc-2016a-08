@@ -1,10 +1,8 @@
-package ar.edu.itba.protos.parsers.filters;
+package ar.edu.itba.protos.protocol.pop3;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-
-import ar.edu.itba.protos.parsers.Pop3Command;
 
 public class Pop3FilterManager {
 
