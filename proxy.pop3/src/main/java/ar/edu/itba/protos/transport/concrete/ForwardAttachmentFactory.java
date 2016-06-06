@@ -17,7 +17,7 @@
 
 	public final class ForwardAttachmentFactory implements AttachmentFactory {
 
-		// Tamaño máximo del buffer (capacidad):
+		// TODO: Debería obtenerse por configuración:
 		public static final int BUFFER_SIZE = 8192;
 
 		public Attachment create() {

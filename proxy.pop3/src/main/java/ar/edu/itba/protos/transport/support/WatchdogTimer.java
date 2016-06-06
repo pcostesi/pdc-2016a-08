@@ -122,7 +122,10 @@
 			if (channel.isOpen()) {
 
 				try {channel.close();}
-				catch (IOException spurious) {}
+				catch (IOException spurious) {
+
+					// Suprimir la excepción
+				}
 			}
 		}
 
@@ -168,6 +171,7 @@
 				** corresponde con las definiciones usuales
 				** por motivos de performance.
 				*/
+				if (obj == null) return false;
 				Activity activity = (Activity) obj;
 				return key.equals(activity.key);
 			}

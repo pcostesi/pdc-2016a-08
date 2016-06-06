@@ -4,10 +4,10 @@
 	import java.io.IOException;
 	import java.nio.channels.SelectionKey;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+	import org.slf4j.Logger;
+	import org.slf4j.LoggerFactory;
 
-import ar.edu.itba.protos.transport.reactor.Handler;
+	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
 	import ar.edu.itba.protos.transport.support.Message;
 
@@ -20,28 +20,40 @@ import ar.edu.itba.protos.transport.reactor.Handler;
 		*/
 
 	public final class ConnectHandler implements Handler {
-		private final static Logger logger = LoggerFactory.getLogger(ConnectHandler.class);
-		
+
+		// Logger:
+		private final static Logger logger
+			= LoggerFactory.getLogger(ConnectHandler.class);
+
 		/*
 		** Procesa el evento para el cual está subscripto. En este
 		** caso, el evento es de conexión saliente establecida.
 		*/
+
 		public void handle(SelectionKey key) {
-			logger.debug("> Connect ({})", key);
+
+			logger.debug("Connect ({})", key);
+
 			Attachment attachment = (Attachment) key.attachment();
 
 			try {
+
 				// Finalizo la conexión remota:
 				if (attachment.getSocket().finishConnect()) {
+
 					logger.debug("Connection established on {}", this);
+
 					// Selecciona los eventos a los cuáles responder:
 					key.interestOps(getOptions(attachment));
-				} else {
-					logger.debug("Pending connection on {}", this);
 				}
+				else logger.debug("Pending connection on {}", this);
 			}
 			catch (IOException exception) {
-				logger.error("Could not handle: {}", Message.CLOSED_PORT, exception);
+
+				logger.error(
+					"Could not handle the connection: {}",
+					Message.CLOSED_PORT,
+					exception);
 			}
 		}
 
@@ -51,12 +63,15 @@ import ar.edu.itba.protos.transport.reactor.Handler;
 		** 'attachment', el cual es obtenido inmediatamente luego de
 		** crear el mismo a través de una fábrica (AttachmentFactory).
 		*/
+
 		private int getOptions(Attachment attachment) {
+
 			int options = SelectionKey.OP_READ;
 			if (attachment != null) {
 
 				attachment.getOutboundBuffer().flip();
 				if (attachment.hasOutboundData()) {
+
 					options |= SelectionKey.OP_WRITE;
 				}
 				attachment.getOutboundBuffer().compact();

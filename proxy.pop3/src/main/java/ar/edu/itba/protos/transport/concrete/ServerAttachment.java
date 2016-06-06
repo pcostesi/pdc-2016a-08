@@ -19,33 +19,28 @@
 	public class ServerAttachment extends Attachment
 									implements Interceptor {
 
-		// El buffer de entrada (lectura):
-		private ByteBuffer inbound = null;
+		// El 'attachment' del 'upstream':
+		private Attachment upstreamAttachment;
 
-		// El buffer de salida (escritura):
-		private ByteBuffer outbound = null;
-
-		public ServerAttachment(
-							SelectionKey upstream,
-							ByteBuffer inbound,
-							ByteBuffer outbound) {
+		public ServerAttachment(SelectionKey upstream) {
 
 			// Cierro el circuito virtual:
-			this.inbound = inbound;
-			this.outbound = outbound;
 			this.upstream = upstream;
+
+			// Extraigo el 'attachment' del lado del cliente:
+			upstreamAttachment = (Attachment) upstream.attachment();
 		}
 
 		@Override
 		public ByteBuffer getInboundBuffer() {
 
-			return inbound;
+			return upstreamAttachment.getOutboundBuffer();
 		}
 
 		@Override
 		public ByteBuffer getOutboundBuffer() {
 
-			return outbound;
+			return upstreamAttachment.getInboundBuffer();
 		}
 
 		@Override
@@ -57,13 +52,13 @@
 		@Override
 		public void onUnplug(Event event) {
 
-			/**/System.out.println("> Server.onUnplug(" + event + ")");
+			/**/System.out.println("Server.onUnplug(" + event + ")");
 
 			// Vacío el buffer 'inbound':
-			inbound.clear();
+			getInboundBuffer().clear();
 
 			// Un mensaje de despedida:
-			inbound.put("(Server) Bye!".getBytes());
+			getInboundBuffer().put("(Server) Bye!".getBytes());
 
 			// Fuerzo el cierre del cliente:
 			closeUpstream();
@@ -71,6 +66,7 @@
 
 		public void consume(ByteBuffer buffer) {
 
-			Interceptor.DEFAULT.consume(buffer);
+			// Esto no va, hay que hacer algo con el buffer:
+			super.getInterceptor().consume(buffer);
 		}
 	}
