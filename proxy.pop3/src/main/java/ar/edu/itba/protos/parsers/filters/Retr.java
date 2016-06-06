@@ -1,34 +1,40 @@
 package ar.edu.itba.protos.parsers.filters;
 
+import java.nio.ByteBuffer;
+
 import ar.edu.itba.protos.parsers.Pop3Command;
 
 public class Retr implements Pop3CommandFilter {
 	
 	@Override
-	public boolean filter(String input, ParsedCommand result) {
+	public boolean filter(ByteBuffer buff, ParsedCommand result) {
 
+		byte caps[] = { 'R', 'E', 'T', 'R' };
+		byte min[] = { 'r', 'e', 't', 'r' };
 		boolean match = false;
+		int index = 0;
+		byte b;
 
-		if (input.length() < 5) {
-		} else if (input.startsWith("retr ")) {
-			result.command = Pop3Command.RETR;
+		if (buff.remaining() >= 6) {
 			match = true;
-			if (input.length() > 5) {
-				result.params = input.substring(5);
-				int i;
-				if (result.params.length() <= maxArgumentSize) {
-					result.status = true;
-					char c;
-					for (i = 0; i < result.params.length(); i++) {
-						c = result.params.charAt(i);
-						if (!Character.isDigit(c)) {
-							result.status = false;
-							break;
-						}
-
-					}
+			while (index < 4) {
+				b = buff.get();
+				if (!(b == caps[index] || b == min[index])) {
+					match = false;
 				}
+				index++;
 			}
+			if (index == 4 && match) {
+					b = buff.get();
+					if (b == ' ') {
+						result.skipParams(buff); //al proxy no le interesan
+						result.setCommand(Pop3Command.RETR);
+					}
+			} else {
+				buff.position(buff.position() - index);
+				match = false;
+			}
+
 		}
 		return match;
 	}

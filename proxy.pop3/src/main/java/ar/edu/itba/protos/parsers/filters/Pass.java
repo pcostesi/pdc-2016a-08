@@ -1,30 +1,40 @@
 package ar.edu.itba.protos.parsers.filters;
 
+import java.nio.ByteBuffer;
+
 import ar.edu.itba.protos.parsers.Pop3Command;
 
 public class Pass implements Pop3CommandFilter {
 
-	public boolean filter(String input, ParsedCommand result) {
+	@Override
+	public boolean filter(ByteBuffer buff, ParsedCommand result) {
 
+		byte caps[] = { 'P', 'A', 'S', 'S' };
+		byte min[] = { 'p', 'a', 's', 's' };
 		boolean match = false;
-
-		if (input.length() < 5) {
-		} else if (input.startsWith("pass ")) {
-			result.command = Pop3Command.PASS;
+		int index = 0;
+		byte b;
+		
+		if (buff.remaining() >= 6) {
 			match = true;
-			if (input.length() > 5) {
-				result.params = input.substring(5);
-				int i;
-				if (result.params.length() <= maxArgumentSize) {
-					result.status = true;
-					for (i = 0; i < result.params.length(); i++) {
-						if (Character.isWhitespace(result.params.charAt(i))) {
-							result.status = false;
-							break;
-						}
-					}
+			while (index < 4) {
+				b = buff.get();
+				if (!(b == caps[index] || b == min[index])) {
+					match = false;
 				}
+				index++;
 			}
+			if (index == 4 && match) {
+				b = buff.get();
+				if (b == ' ') {
+					result.skipParams(buff); //al proxy no le interesan
+					result.setCommand(Pop3Command.PASS);
+				}
+			} else {
+				buff.position(buff.position() - index);
+				match = false;
+			}
+
 		}
 		return match;
 	}

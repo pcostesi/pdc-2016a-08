@@ -1,12 +1,12 @@
 package ar.edu.itba.protos.parsers.filters;
 
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Pop3FilterManager {
 
+	private static final int smallestCommand = 5; //Would be TOP
 	private List<Pop3CommandFilter> filterChain = new ArrayList<Pop3CommandFilter>();
 
 	public Pop3FilterManager() {
@@ -21,18 +21,12 @@ public class Pop3FilterManager {
 	public ParsedCommand filter(ByteBuffer buff) {
 
 		ParsedCommand result = new ParsedCommand();
-
-		String SCommand = new String(buff.array());
-
-		if (SCommand.length() < 4) {
+		if (buff.remaining() < smallestCommand) {
 			return result;
 		}
-		String aux = SCommand.substring(0, 4).toLowerCase();
-
-		String input = aux + SCommand.substring(4, SCommand.length());
 
 		for (Pop3CommandFilter fil : filterChain) {
-			if (fil.filter(input, result)) {
+			if (fil.filter(buff, result)) {
 				break;
 			}
 		}
