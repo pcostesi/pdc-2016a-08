@@ -16,6 +16,7 @@ public class Pop3FilterManager {
 		filterChain.add(new Retr());
 		filterChain.add(new User());
 		filterChain.add(new Pass());
+		filterChain.add(new Capa());
 	}
 
 	public ParsedCommand filter(ByteBuffer buff) {

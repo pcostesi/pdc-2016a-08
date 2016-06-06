@@ -117,6 +117,14 @@ public class FilterManagerTests {
 		assertTrue(result.getStatus() == CommandStatus.UNCHECKED && result.getCommand() == Pop3Command.ERR);
 	}
 	
+	@Test
+	public void CapaTest() {
+		String commandToTest = "CAPA\r\n";
+		ByteBuffer buffer = ByteBuffer.wrap(commandToTest.getBytes());
+		ParsedCommand result = parser.filter(buffer);
+		assertTrue(result.getStatus() == CommandStatus.COMPLETE && result.getCommand() == Pop3Command.CAPA);
+	}
+	
 	
 	/*Placed here to avoid visual spamm*/
 	private final String superLongString = "THISISAVERASJDBJBSAKJBSADKJSDKSAKJASHJKDBASDYSBDAKJSKJSABJKBDJKASBJKBSDKJBDKDKJSKJ"
