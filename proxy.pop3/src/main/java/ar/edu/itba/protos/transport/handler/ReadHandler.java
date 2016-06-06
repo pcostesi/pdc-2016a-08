@@ -6,13 +6,12 @@
 	import java.nio.channels.SelectionKey;
 	import java.nio.channels.SocketChannel;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+	import org.slf4j.Logger;
+	import org.slf4j.LoggerFactory;
 
-import ar.edu.itba.protos.transport.reactor.Event;
+	import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
-	import ar.edu.itba.protos.transport.support.Interceptor;
 	import ar.edu.itba.protos.transport.support.Message;
 
 		/**
@@ -23,8 +22,11 @@ import ar.edu.itba.protos.transport.reactor.Event;
 		*/
 
 	public final class ReadHandler implements Handler {
-		private static final Logger logger = LoggerFactory.getLogger(ReadHandler.class);
-		
+
+		// Logger:
+		private static final Logger logger
+			= LoggerFactory.getLogger(ReadHandler.class);
+
 		// Esta constante indica que el stream se ha cerrado:
 		private static final int BROKEN_PIPE = -1;
 
@@ -35,7 +37,7 @@ import ar.edu.itba.protos.transport.reactor.Event;
 
 		public void handle(SelectionKey key) {
 
-			logger.debug("> Read ({})", key);
+			logger.debug("Read ({})", key);
 
 			Attachment attachment = (Attachment) key.attachment();
 			ByteBuffer buffer = attachment.getInboundBuffer();
@@ -53,7 +55,7 @@ import ar.edu.itba.protos.transport.reactor.Event;
 					buffer.position(position);
 
 					// Consumo el flujo de bytes entrante:
-					getInterceptor(attachment).consume(buffer);
+					attachment.getInterceptor().consume(buffer);
 
 					// Backtracking (no recuerda el límite):
 					buffer.position(position);
@@ -71,34 +73,23 @@ import ar.edu.itba.protos.transport.reactor.Event;
 						Event.disable(key, SelectionKey.OP_READ);
 					}
 				}
-				else {
-
-					// Desconecto el 'downstream':
-					attachment.closeDownstream();
-					attachment.setDownstream(null);
-					attachment.onUnplug(Event.READ);
-
-					// Si hay información para enviar, abro el 'upstream':
-					detectInbound(attachment);
-				}
+				else throw new IOException();
 			}
 			catch (IOException exception) {
 
-				logger.error("Handling message failed with code {}", Message.UNKNOWN, exception);
+				logger.error(
+					"Handling message failed with code {}",
+					Message.CLIENT_UNPLUGGED,
+					exception);
+
+				// Desconecto el 'downstream':
+				attachment.closeDownstream();
+				attachment.setDownstream(null);
+				attachment.onUnplug(Event.READ);
+
+				// Si hay información para enviar, abro el 'upstream':
+				detectInbound(attachment);
 			}
-		}
-
-		/*
-		** Intenta obtener un 'interceptor' del 'attachment' sobre
-		** el canal por el cual se está leyendo. Si no existe uno, se
-		** devuelve uno por defecto (que no hace nada).
-		*/
-
-		private Interceptor getInterceptor(Attachment attachment) {
-
-			Interceptor interceptor = attachment.getInterceptor();
-			if (interceptor != null) return interceptor;
-			else return Interceptor.DEFAULT;
 		}
 
 		/*

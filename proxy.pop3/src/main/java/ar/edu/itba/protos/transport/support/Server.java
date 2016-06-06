@@ -1,59 +1,66 @@
 
-package ar.edu.itba.protos.transport.support;
+	package ar.edu.itba.protos.transport.support;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.channels.CancelledKeyException;
-import java.nio.channels.Channel;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+	import java.io.IOException;
+	import java.net.InetSocketAddress;
+	import java.nio.channels.CancelledKeyException;
+	import java.nio.channels.Channel;
+	import java.nio.channels.SelectionKey;
+	import java.nio.channels.Selector;
+	import java.nio.channels.ServerSocketChannel;
+	import java.util.ArrayList;
+	import java.util.Iterator;
+	import java.util.List;
+	import java.util.Set;
 
-import javax.inject.Inject;
+	import javax.inject.Inject;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+	import org.slf4j.Logger;
+	import org.slf4j.LoggerFactory;
 
-import ar.edu.itba.protos.transport.reactor.Reactor;
+	import ar.edu.itba.protos.transport.reactor.Reactor;
 
-/**
- * Un servidor recibe conexiones entrantes en las direcciones y puertos
- * especificados, y genera eventos de forma no-bloqueante, los cuales son
- * despachados hacia un demultiplexor (implementado mediante un reactor).
- */
+		/**
+		* Un servidor recibe conexiones entrantes en las
+		* direcciones y puertos especificados, y genera
+		* eventos de forma no-bloqueante, los cuales son
+		* despachados hacia un demultiplexor (implementado
+		* mediante un reactor).
+		*/
 
-public final class Server {
+	public final class Server {
 
-	private static final Logger logger = LoggerFactory.getLogger(Server.class);
+		// TODO: obtener por configuración Pablo!!!
+		/**/private static final long TIMEOUT = 10000;
+		/**/private static final long LAZY_DETECTION_INTERVAL = 1000;
 
-	// TODO: obtener por configuración Pablo!!!
-	private static final long TIMEOUT = 10000;
-	private static final long LAZY_DETECTION_INTERVAL = 1000;
+		// Logger:
+		private static final Logger logger
+			= LoggerFactory.getLogger(Server.class);
 
-	// Watchdog-timer utilizado para cerrar canales inactivos:
-	private final WatchdogTimer watchdog
-		= new WatchdogTimer(TIMEOUT);
+		// Demultiplexador de eventos generados:
+		private final Reactor demultiplexor;
 
-	// Generador de eventos:
-	private Selector selector;
+		// Watchdog-timer utilizado para cerrar canales inactivos:
+		private final WatchdogTimer watchdog
+			= new WatchdogTimer(TIMEOUT);
 
-	// Lista de sockets escuchando conexiones entrantes:
-	private List<ServerSocketChannel> listeners = null;
+		// Lista de sockets escuchando conexiones entrantes:
+		private List<ServerSocketChannel> listeners = null;
 
-	// Demultiplexador de eventos generados:
-	private final Reactor demultiplexor;
+		// Generador de eventos:
+		private Selector selector;
 
-	@Inject
-	public Server(Reactor demultiplexor) {
-		this.demultiplexor = demultiplexor;
-		try {
-			selector = Selector.open();
-			listeners = new ArrayList<ServerSocketChannel>();
-		} catch (IOException exception) {
+		@Inject
+		public Server(Reactor demultiplexor) {
+
+			this.demultiplexor = demultiplexor;
+			try {
+
+				selector = Selector.open();
+				listeners = new ArrayList<ServerSocketChannel>();
+			}
+			catch (IOException exception) {
 
 				exception.printStackTrace();
 			}
@@ -79,15 +86,16 @@ public final class Server {
 		** Devuelve 'true' si pudo agregar el canal.
 		*/
 
-		public Server addListener(InetSocketAddress address, Object attach)
-				throws IOException {
+		public Server addListener(
+				InetSocketAddress address,
+				AttachmentFactory factory) throws IOException {
 
-			logger.debug("Attaching listen socket {} to {}", address, attach);
+			logger.debug("Attaching listen socket {} to {}", address, factory);
 
 			ServerSocketChannel channel = ServerSocketChannel.open();
 			channel.configureBlocking(false);
 			channel.socket().bind(address);
-			channel.register(selector, SelectionKey.OP_ACCEPT, attach);
+			channel.register(selector, SelectionKey.OP_ACCEPT, factory);
 
 			listeners.add(channel);
 
@@ -100,11 +108,13 @@ public final class Server {
 		** Devuelve 'true' si pudo agregar el canal.
 		*/
 
-		public Server addListener(String IP, int port, Object attach)
-				throws IOException {
+		public Server addListener(
+				String IP,
+				int port,
+				AttachmentFactory factory) throws IOException {
 
 			InetSocketAddress address = new InetSocketAddress(IP, port);
-			return addListener(address, attach);
+			return addListener(address, factory);
 		}
 
 		/*
@@ -138,11 +148,10 @@ public final class Server {
 						}
 
 						// Habría que sacar esto, eventualmente...
-						logger.trace("> Select ({})", key);
+						logger.trace("Select ({})", key);
 
 						// Solicito que un manejador resuelva el evento:
 						demultiplexor.dispatch(key);
-
 						iterator.remove();
 					}
 				}
@@ -194,8 +203,11 @@ public final class Server {
 		private boolean isListener(SelectionKey key) {
 
 			try {
+
 				return 0 != (key.interestOps() & SelectionKey.OP_ACCEPT);
-			} catch (CancelledKeyException exception) {
+			}
+			catch (CancelledKeyException exception) {
+
 				return false;
 			}
 		}
