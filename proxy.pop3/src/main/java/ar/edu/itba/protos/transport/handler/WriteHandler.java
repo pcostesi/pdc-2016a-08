@@ -62,14 +62,10 @@
 					Event.disable(key, SelectionKey.OP_WRITE);
 				}
 
-				// Si logró enviar datos:
-				if (0 < written) {
+				// Si logró enviar datos y estaba lleno, habilito lectura:
+				if (0 < written && full) {
 
-					// Liberar espacio para lectura (inbound):
-					buffer.compact();
-
-					// Si estaba lleno y se vació algo, habilito lectura:
-					if (full) Event.enable(key, SelectionKey.OP_READ);
+					Event.enable(key, SelectionKey.OP_READ);
 				}
 			}
 			catch (IOException exception) {

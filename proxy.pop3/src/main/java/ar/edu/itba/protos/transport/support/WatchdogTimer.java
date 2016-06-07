@@ -26,7 +26,7 @@
 
 		// Cola de actividades (ordenada por inactividad):
 		private final PriorityQueue<Activity> activities
-			= new PriorityQueue<Activity>(
+			= new PriorityQueue<>(
 					Comparator.comparing(Activity::getInactivity));
 
 		public WatchdogTimer(long timeout) {

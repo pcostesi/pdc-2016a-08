@@ -58,10 +58,11 @@
 			try {
 
 				selector = Selector.open();
-				listeners = new ArrayList<ServerSocketChannel>();
+				listeners = new ArrayList<>();
 			}
 			catch (IOException exception) {
 
+				// TODO: Muy feo esto...
 				exception.printStackTrace();
 			}
 		}

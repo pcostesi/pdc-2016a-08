@@ -7,18 +7,32 @@
 	import java.util.Map;
 	import java.util.Set;
 
-	import javax.inject.Inject;
 	import javax.inject.Singleton;
 
 	import org.slf4j.Logger;
 	import org.slf4j.LoggerFactory;
 
+	import com.google.inject.Inject;
+
 		/**
-		* Implementación del patrón Reactor. Este sistema
+		* <p>Implementación del patrón Reactor. Este sistema
 		* permite forwardear eventos hacia distintas entidades
 		* desacopladas de forma eficiente y genérica. En este
 		* caso, los eventos tratables se asocian a estados de
-		* canales de comunicación.
+		* canales de comunicación.</p>
+		*
+		* <p>Debido a que cumple con las condiciones de <i>Google Guice</i>
+		* para ser injectado como <b>singleton</b> (posee la anotación
+		* <i>{@literal @Singleton}</i>, y su constructor es privado, sin
+		* parámetros y bajo <i>{@literal @Inject}</i>), la clase debería ser
+		* <b>thread-safe</b>. Ya que solo el <i>master-thread</i> accede a
+		* su única instancia, no es necesario garantizar dicha condición.</p>
+		*
+		* @see
+		*	<a href = "https://github.com/google/guice/wiki/Scopes
+		*		#scopes-and-concurrency">
+		*		Google Guice: Scopes and Concurrency
+		*	</a>
 		*/
 
 	@Singleton
@@ -32,14 +46,14 @@
 		private Map<Event, Set<Handler>> handlers = null;
 
 		@Inject
-		public Reactor() {
+		private Reactor() {
 
 			// La estructura de búsqueda de eventos es un mapa:
-			handlers = new HashMap<Event, Set<Handler>>();
+			handlers = new HashMap<>();
 
 			// Para cada evento, se dispone un conjunto de manejadores:
 			for (Event event : Event.values())
-				handlers.put(event, new HashSet<Handler>());
+				handlers.put(event, new HashSet<>());
 		}
 
 		/*

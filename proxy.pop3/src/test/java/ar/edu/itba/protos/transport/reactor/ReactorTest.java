@@ -8,21 +8,38 @@
 	import java.nio.channels.SelectionKey;
 
 	import org.junit.Before;
+	import org.junit.BeforeClass;
 	import org.junit.Test;
 	import org.mockito.Mockito;
 
+	import com.google.inject.Guice;
+	import com.google.inject.Injector;
+	import com.google.inject.Stage;
+
+	import ar.edu.itba.protos.DIModule;
+
 	public class ReactorTest {
 
-		private Reactor reactor = null;
+		private final static Injector injector
+			= Guice.createInjector(Stage.PRODUCTION, new DIModule());
+
+		private static Reactor reactor = null;
+
 		private SelectionKey key = null;
 		private Handler handler = null;
 		private Handler otherHandler = null;
 		private Handler readHandler = null;
 
+		@BeforeClass
+		public static void injectReactor() {
+
+			reactor = injector.getInstance(Reactor.class);
+		}
+
 		@Before
 		public void init() {
 
-			reactor = new Reactor();
+			reactor.unplug();
 
 			key = Mockito.mock(SelectionKey.class);
 			handler = Mockito.mock(Handler.class);
@@ -160,6 +177,6 @@
 
 			verify(handler, times(reactor.getEvents())).handle(key);
 			verify(otherHandler, times(reactor.getEvents())).handle(key);
-			verify(readHandler, times(1)).handle(key);
+			verify(readHandler).handle(key);
 		}
 	}
