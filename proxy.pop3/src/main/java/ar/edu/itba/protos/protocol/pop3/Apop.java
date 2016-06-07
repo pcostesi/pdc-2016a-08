@@ -10,20 +10,20 @@ public class Apop implements Pop3CommandFilter {
 		byte caps[] = { 'A', 'P', 'O', 'P' };
 		byte min[] = { 'a', 'p', 'o', 'p' };
 		boolean match = false;
-		int index = 0;
+		int index = 0, minSize = caps.length +1;
 		int initial = buff.position();
 		byte b;
 
-		if (buff.remaining() >= 6) {
+		if (buff.remaining() >= minSize) {
 			match = true;
-			while (index < 4) {
+			while (index < caps.length) {
 				b = buff.get();
 				if (!(b == caps[index] || b == min[index])) {
 					match = false;
 				}
 				index++;
 			}
-			if (index == 4 && match) {
+			if (index == caps.length && match) {
 				b = buff.get();
 				if (b == ' ') {
 					result.extractParams(buff);

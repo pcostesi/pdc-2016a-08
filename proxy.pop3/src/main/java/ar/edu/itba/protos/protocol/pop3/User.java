@@ -10,19 +10,19 @@ public class User implements Pop3CommandFilter {
 		byte caps[] = { 'U', 'S', 'E', 'R' };
 		byte min[] = { 'u', 's', 'e', 'r' };
 		boolean match = false;
-		int index = 0, initial = buff.position();
+		int index = 0, initial = buff.position(), minSize = caps.length + 1;
 		byte b;
 
-		if (buff.remaining() >= 5) {
+		if (buff.remaining() >= minSize) {
 			match = true;
-			while (buff.hasRemaining() && index < 4) {
+			while (buff.hasRemaining() && index < caps.length) {
 				b = buff.get();
 				if (!(b == caps[index] || b == min[index])) {
 					match = false;
 				}
 				index++;
 			}
-			if (index == 4 && match) {
+			if (index == caps.length && match) {
 				b = buff.get();
 				if (b == ' ') {
 					result.extractParams(buff);

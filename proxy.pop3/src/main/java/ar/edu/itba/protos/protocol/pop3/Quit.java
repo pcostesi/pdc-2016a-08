@@ -11,19 +11,19 @@ public class Quit implements Pop3CommandFilter {
 		byte min[] = { 'q', 'u', 'i', 't' };
 		boolean match = false;
 		int initial = buff.position();
-		int index = 0;
+		int index = 0, minSize = caps.length + 1;
 		byte b;
 
-		if (buff.remaining() >= 6) {
+		if (buff.remaining() >= minSize) {
 			match = true;
-			while (index < 4) {
+			while (index < caps.length) {
 				b = buff.get();
 				if (!(b == caps[index] || b == min[index])) {
 					match = false;
 				}
 				index++;
 			}
-			if (index == 4 && match) {
+			if (index == caps.length && match) {
 				b = buff.get();
 				if (b == '\r' && buff.get() == '\n') {
 					result.setCommand(Pop3Command.QUIT);

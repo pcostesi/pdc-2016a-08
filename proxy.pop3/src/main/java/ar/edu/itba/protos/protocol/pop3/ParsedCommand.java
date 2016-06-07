@@ -7,7 +7,7 @@ public class ParsedCommand {
 	private Pop3Command command;
 	private String params;
 	private CommandStatus status;
-	private static final int maxCommandSize = 255;
+	private int maxCommandSize = 255;
 
 	ParsedCommand(Pop3Command command, String params, CommandStatus status) {
 		this.command = command;

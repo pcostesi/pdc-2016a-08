@@ -10,19 +10,19 @@ public class Pass implements Pop3CommandFilter {
 		byte caps[] = { 'P', 'A', 'S', 'S' };
 		byte min[] = { 'p', 'a', 's', 's' };
 		boolean match = false;
-		int index = 0, initial = buff.position();
+		int index = 0, initial = buff.position(), minSize = caps.length + 1;
 		byte b;
 
-		if (buff.remaining() >= 6) {
+		if (buff.remaining() >= minSize) {
 			match = true;
-			while (index < 4) {
+			while (index < caps.length) {
 				b = buff.get();
 				if (!(b == caps[index] || b == min[index])) {
 					match = false;
 				}
 				index++;
 			}
-			if (index == 4 && match) {
+			if (index == caps.length && match) {
 				b = buff.get();
 				if (b == ' ') {
 					result.skipParams(buff); // al proxy no le interesan

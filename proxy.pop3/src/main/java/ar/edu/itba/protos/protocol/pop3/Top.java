@@ -10,19 +10,19 @@ public class Top implements Pop3CommandFilter {
 		byte caps[] = { 'T', 'O', 'P' };
 		byte min[] = { 't', 'o', 'p' };
 		boolean match = false;
-		int index = 0, initial = buff.position();
+		int index = 0, initial = buff.position(), minSize = caps.length + 1;
 		byte b;
 
-		if (buff.remaining() >= 5) {
+		if (buff.remaining() >= minSize) {
 			match = true;
-			while (buff.hasRemaining() && index < 3) {
+			while (buff.hasRemaining() && index < caps.length) {
 				b = buff.get();
 				if (!(b == caps[index] || b == min[index])) {
 					match = false;
 				}
 				index++;
 			}
-			if (index == 3 && match) {
+			if (index == caps.length && match) {
 				b = buff.get();
 				if (b == ' ') {
 					result.skipParams(buff); // al proxy no le interesan
