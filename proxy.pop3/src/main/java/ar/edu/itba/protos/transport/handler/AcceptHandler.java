@@ -9,24 +9,40 @@
 	import org.slf4j.Logger;
 	import org.slf4j.LoggerFactory;
 
+	import com.google.inject.Inject;
+	import com.google.inject.Singleton;
+
 	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
 	import ar.edu.itba.protos.transport.support.AttachmentFactory;
 	import ar.edu.itba.protos.transport.support.Message;
+	import ar.edu.itba.protos.transport.support.Synchronizer;
 
 		/**
-		* Se encarga de procesar los eventos de aceptación.
+		* <p>Se encarga de procesar los eventos de aceptación.
 		* Estos suceden cuando un cliente establece conexión
 		* en alguna de las direcciones y puertos de escucha de
 		* alguno de los servidores que están utilizando el mismo
-		* reactor al cual este 'handler' está subscripto.
+		* reactor al cual este 'handler' está subscripto.</p>
+		*
+		* <p>Esta clase es <b>thread-safe</b>.</p>
 		*/
 
+	@Singleton
 	public final class AcceptHandler implements Handler {
 
 		// Logger:
 		private final static Logger logger
 			= LoggerFactory.getLogger(AcceptHandler.class);
+
+		// Repositorio global de claves:
+		private final Synchronizer sync;
+
+		@Inject
+		private AcceptHandler(final Synchronizer sync) {
+
+			this.sync = sync;
+		}
 
 		/*
 		** Procesa el evento para el cual está subscripto. En este

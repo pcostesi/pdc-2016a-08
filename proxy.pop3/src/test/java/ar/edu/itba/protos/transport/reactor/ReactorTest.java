@@ -7,6 +7,7 @@
 
 	import java.nio.channels.SelectionKey;
 
+	import org.junit.AfterClass;
 	import org.junit.Before;
 	import org.junit.BeforeClass;
 	import org.junit.Test;
@@ -34,6 +35,12 @@
 		public static void injectReactor() {
 
 			reactor = injector.getInstance(Reactor.class);
+		}
+
+		@AfterClass
+		public static void blockReactor() {
+
+			reactor.block();
 		}
 
 		@Before

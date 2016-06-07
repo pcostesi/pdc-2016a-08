@@ -7,23 +7,39 @@
 	import org.slf4j.Logger;
 	import org.slf4j.LoggerFactory;
 
+	import com.google.inject.Inject;
+	import com.google.inject.Singleton;
+
 	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
 	import ar.edu.itba.protos.transport.support.Message;
+	import ar.edu.itba.protos.transport.support.Synchronizer;
 
 		/**
-		* Se encarga de establecer una conexión con el 'origin-server',
+		* <p>Se encarga de establecer una conexión con el 'origin-server',
 		* por la cual el circuito cliente-servidor quedará establecido.
 		* Para determinar el 'origin-server' es necesario pre-procesar una
 		* cantidad mínima del flujo de bytes desde el cliente, para poder
-		* determinar hacia donde demultiplexar la conexión.
+		* determinar hacia donde demultiplexar la conexión.</p>
+		*
+		* <p>Esta clase es <b>thread-safe</b>.</p>
 		*/
 
+	@Singleton
 	public final class ConnectHandler implements Handler {
 
 		// Logger:
 		private final static Logger logger
 			= LoggerFactory.getLogger(ConnectHandler.class);
+
+		// Repositorio global de claves:
+		private final Synchronizer sync;
+
+		@Inject
+		private ConnectHandler(final Synchronizer sync) {
+
+			this.sync = sync;
+		}
 
 		/*
 		** Procesa el evento para el cual está subscripto. En este

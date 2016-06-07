@@ -34,6 +34,12 @@ public final class POP3Server {
     private final Reactor demultiplexor;
     private final Server pop3;
 
+    // Handler injections:
+    @Inject private AcceptHandler acceptHandler;
+    @Inject private ReadHandler readHandler;
+    @Inject private WriteHandler writeHandler;
+    @Inject private ConnectHandler connectHandler;
+
     @Inject
     private POP3Server(final Reactor demultiplexor, final Server pop3) {
         this.demultiplexor = demultiplexor;
@@ -43,6 +49,7 @@ public final class POP3Server {
     public void run() throws IOException {
 
         final ProxyConfiguration config = ConfigurationLoader.getProxyConfig();
+
         /*
          ** Fábricas de 'attachments'. Cada servidor puede tener una fábrica
          * distinta en cada puerto de escucha (es decir, en cada 'listener'):
@@ -55,10 +62,10 @@ public final class POP3Server {
          ** Se instalan los manejadores (Handlers) en el demultiplexador de
          * eventos global:
          */
-        demultiplexor.add(new AcceptHandler(), Event.ACCEPT)
-                .add(new ReadHandler(), Event.READ)
-                .add(new WriteHandler(), Event.WRITE)
-                .add(new ConnectHandler(), Event.CONNECT);
+        demultiplexor.add(acceptHandler, Event.ACCEPT)
+                .add(readHandler, Event.READ)
+                .add(writeHandler, Event.WRITE)
+                .add(connectHandler, Event.CONNECT);
 
         /*
          ** Se instancia un nuevo servidor y se aplica un 'binding' en cada
@@ -80,5 +87,8 @@ public final class POP3Server {
 
         // Quitar todos los manejadores del demultiplexor global:
         demultiplexor.unplug();
+
+        // Bloquear por completo el rector:
+        demultiplexor.block();
     }
 }

@@ -9,23 +9,39 @@
 	import org.slf4j.Logger;
 	import org.slf4j.LoggerFactory;
 
+	import com.google.inject.Inject;
+	import com.google.inject.Singleton;
+
 	import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
 	import ar.edu.itba.protos.transport.support.Message;
+	import ar.edu.itba.protos.transport.support.Synchronizer;
 
 		/**
-		* Se encarga de procesar los eventos de lectura.
+		* <p>Se encarga de procesar los eventos de lectura.
 		* Estos suceden cuando, una vez establecido un
 		* circuito de conexión, uno de los extremos de dicho
-		* circuito comienza a emitir un flujo de bytes.
+		* circuito comienza a emitir un flujo de bytes.</p>
+		*
+		* <p>Esta clase es <b>thread-safe</b>.</p>
 		*/
 
+	@Singleton
 	public final class ReadHandler implements Handler {
 
 		// Logger:
 		private static final Logger logger
 			= LoggerFactory.getLogger(ReadHandler.class);
+
+		// Repositorio global de claves:
+		private final Synchronizer sync;
+
+		@Inject
+		private ReadHandler(final Synchronizer sync) {
+
+			this.sync = sync;
+		}
 
 		// Esta constante indica que el stream se ha cerrado:
 		private static final int BROKEN_PIPE = -1;
@@ -68,10 +84,8 @@
 					buffer.limit(buffer.capacity());
 
 					// Si el buffer se llenó, ya no se puede leer:
-					if (attachment.hasFullInbound()) {
-
-						Event.disable(key, SelectionKey.OP_READ);
-					}
+					if (attachment.hasFullInbound())
+						sync.disable(key, Event.READ);
 				}
 				else throw new IOException();
 			}
@@ -81,6 +95,9 @@
 					"Handling message failed with code {}",
 					Message.CLIENT_UNPLUGGED,
 					exception);
+
+				// Elimino la clave del repositorio:
+				sync.delete(key);
 
 				// Desconecto el 'downstream':
 				attachment.closeDownstream();
@@ -103,7 +120,7 @@
 			if (attachment.hasInboundData()) {
 
 				SelectionKey upstream = attachment.getUpstream();
-				Event.enable(upstream, SelectionKey.OP_WRITE);
+				sync.enable(upstream, Event.WRITE);
 			}
 		}
 	}

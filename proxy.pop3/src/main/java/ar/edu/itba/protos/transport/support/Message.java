@@ -17,6 +17,15 @@
 			("+OK POP-3 Proxy Server (ready).\r\n"),
 
 		/*
+		** Errores internos generales:
+		*/
+
+		CANNOT_TERMINATE
+			("No se cancelaron todas las tareas pendientes"),
+		SHUTDOWN_INTERRUPTED
+			("El sistema fue interrumpido durante el cierre"),
+
+		/*
 		** Errores asociados a la exposición de un servidor:
 		*/
 

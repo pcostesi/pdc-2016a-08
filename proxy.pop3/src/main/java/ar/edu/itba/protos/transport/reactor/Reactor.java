@@ -14,6 +14,8 @@
 
 	import com.google.inject.Inject;
 
+	import ar.edu.itba.protos.transport.support.ThreadingCore;
+
 		/**
 		* <p>Implementación del patrón Reactor. Este sistema
 		* permite forwardear eventos hacia distintas entidades
@@ -39,14 +41,19 @@
 	public final class Reactor {
 
 		// Logger:
-		private final static Logger logger
+		private static final Logger logger
 			= LoggerFactory.getLogger(Reactor.class);
 
 		// Mapa de entidades que pueden procesar eventos:
 		private Map<Event, Set<Handler>> handlers = null;
 
+		// El núcleo de ejecución:
+		private final ThreadingCore core;
+
 		@Inject
-		private Reactor() {
+		private Reactor(final ThreadingCore core) {
+
+			this.core = core;
 
 			// La estructura de búsqueda de eventos es un mapa:
 			handlers = new HashMap<>();
@@ -120,20 +127,13 @@
 		}
 
 		/*
-		** Este método permite desubscribir todos los 'handlers',
-		** lo que permite desconectar todos los componentes que,
-		** gracias al reactor, se encontraban relacionados.
+		** Bloquea la ejecución de nuevas tareas por completo, lo
+		** que significa que el reactor queda inutilizable.
 		*/
 
-		public void unplug() {
+		public void block() {
 
-			logger.debug("Unplugging all events from Reactor {}", this);
-
-			for (Event event : Event.values()) {
-
-				Set<Handler> set = handlers.get(event);
-				if (set != null) set.clear();
-			}
+			core.shutdown();
 		}
 
 		/*
@@ -150,7 +150,7 @@
 
 				if (set != null && isOn(event, key))
 					for (Handler handler : set)
-						handler.handle(key);
+						core.submit(handler, key);
 			}
 		}
 
@@ -186,5 +186,22 @@
 				remove(handler, event);
 
 			return this;
+		}
+
+		/*
+		** Este método permite desubscribir todos los 'handlers',
+		** lo que permite desconectar todos los componentes que,
+		** gracias al reactor, se encontraban relacionados.
+		*/
+
+		public void unplug() {
+
+			logger.debug("Unplugging all events from Reactor {}", this);
+
+			for (Event event : Event.values()) {
+
+				Set<Handler> set = handlers.get(event);
+				if (set != null) set.clear();
+			}
 		}
 	}
