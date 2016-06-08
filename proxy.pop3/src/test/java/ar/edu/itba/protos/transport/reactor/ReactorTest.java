@@ -182,6 +182,15 @@
 				reactor.dispatch(key);
 			}
 
+			try {
+
+				/* Debido a que utiliza threads, es necesario
+				** darle algo de tiempo para que 'verify' no falle.
+				*/
+				Thread.sleep(3000);
+			}
+			catch (InterruptedException spurious) {}
+
 			verify(handler, times(reactor.getEvents())).handle(key);
 			verify(otherHandler, times(reactor.getEvents())).handle(key);
 			verify(readHandler).handle(key);

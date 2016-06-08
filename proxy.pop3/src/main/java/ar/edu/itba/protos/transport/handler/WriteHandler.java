@@ -45,6 +45,27 @@
 			this.sync = sync;
 		}
 
+		public void onSubmit(SelectionKey key) {
+
+			Attachment attachment = (Attachment) key.attachment();
+			SelectionKey upstream = attachment.getUpstream();
+
+			if (upstream != null) {
+
+				sync.save(upstream);
+				sync.suspend(upstream);
+			}
+		}
+
+		public void onResume(SelectionKey key) {
+
+			Attachment attachment = (Attachment) key.attachment();
+			SelectionKey upstream = attachment.getUpstream();
+
+			if (upstream != null)
+				sync.restore(upstream);
+		}
+
 		/*
 		** Procesa el evento para el cual está subscripto. En este
 		** caso, el evento es de escritura del flujo de bytes.
@@ -107,6 +128,13 @@
 		*/
 
 		private void detectInbound(Attachment attachment) {
+
+			/*
+			** Podemos modificar el estado de la clave
+			** asociada al 'upstream', debido a que el método
+			** 'onSubmit()', garantiza que la misma se encuentre
+			** en el repositorio global.
+			*/
 
 			if (attachment.hasInboundData()) {
 

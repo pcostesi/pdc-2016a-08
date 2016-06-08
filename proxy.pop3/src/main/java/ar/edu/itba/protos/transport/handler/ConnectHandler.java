@@ -10,6 +10,7 @@
 	import com.google.inject.Inject;
 	import com.google.inject.Singleton;
 
+	import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
 	import ar.edu.itba.protos.transport.support.Message;
@@ -41,6 +42,27 @@
 			this.sync = sync;
 		}
 
+		public void onSubmit(SelectionKey key) {
+
+			Attachment attachment = (Attachment) key.attachment();
+			SelectionKey upstream = attachment.getUpstream();
+
+			if (upstream != null) {
+
+				sync.save(upstream);
+				sync.suspend(upstream);
+			}
+		}
+
+		public void onResume(SelectionKey key) {
+
+			Attachment attachment = (Attachment) key.attachment();
+			SelectionKey upstream = attachment.getUpstream();
+
+			if (upstream != null)
+				sync.restore(upstream);
+		}
+
 		/*
 		** Procesa el evento para el cual está subscripto. En este
 		** caso, el evento es de conexión saliente establecida.
@@ -59,8 +81,15 @@
 
 					logger.debug("Connection established on {}", this);
 
-					// Selecciona los eventos a los cuáles responder:
-					key.interestOps(getOptions(attachment));
+					// Prepara los eventos del canal:
+					sync.disable(key, Event.CONNECT);
+					sync.enable(key, Event.READ);
+					attachment.getOutboundBuffer().flip();
+
+					if (attachment.hasOutboundData())
+						sync.enable(key, Event.WRITE);
+
+					attachment.getOutboundBuffer().compact();
 				}
 				else logger.debug("Pending connection on {}", this);
 			}
@@ -71,27 +100,5 @@
 					Message.CLOSED_PORT,
 					exception);
 			}
-		}
-
-		/*
-		** Determina los eventos iniciales a los que este canal
-		** debe responder en función del estado por defecto del
-		** 'attachment', el cual es obtenido inmediatamente luego de
-		** crear el mismo a través de una fábrica (AttachmentFactory).
-		*/
-
-		private int getOptions(Attachment attachment) {
-
-			int options = SelectionKey.OP_READ;
-			if (attachment != null) {
-
-				attachment.getOutboundBuffer().flip();
-				if (attachment.hasOutboundData()) {
-
-					options |= SelectionKey.OP_WRITE;
-				}
-				attachment.getOutboundBuffer().compact();
-			}
-			return options;
 		}
 	}

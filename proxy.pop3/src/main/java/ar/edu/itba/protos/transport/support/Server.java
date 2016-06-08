@@ -42,8 +42,7 @@
 		private final Reactor demultiplexor;
 
 		// Watchdog-timer utilizado para cerrar canales inactivos:
-		private final WatchdogTimer watchdog
-			= new WatchdogTimer(TIMEOUT);
+		private final WatchdogTimer watchdog;
 
 		// Lista de sockets escuchando conexiones entrantes:
 		private List<ServerSocketChannel> listeners = null;
@@ -52,11 +51,14 @@
 		private Selector selector;
 
 		@Inject
-		public Server(Reactor demultiplexor) {
+		public Server(Reactor demultiplexor, WatchdogTimer watchdog) {
 
+			this.watchdog = watchdog;
 			this.demultiplexor = demultiplexor;
+
 			try {
 
+				watchdog.setTimeout(TIMEOUT);
 				selector = Selector.open();
 				listeners = new ArrayList<>();
 			}

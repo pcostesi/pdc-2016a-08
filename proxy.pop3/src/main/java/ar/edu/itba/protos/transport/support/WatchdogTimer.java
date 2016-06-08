@@ -7,6 +7,8 @@
 	import java.util.Comparator;
 	import java.util.PriorityQueue;
 
+	import com.google.inject.Inject;
+
 		/**
 		* Un 'watchdog-timer' permite manipular el nivel de
 		* inactividad de un canal de comunicación, o de un
@@ -22,19 +24,20 @@
 	public final class WatchdogTimer {
 
 		// La constante de inactividad (en milisegundos):
-		private long timeout;
+		private long timeout = Long.MAX_VALUE;
 
 		// Cola de actividades (ordenada por inactividad):
 		private final PriorityQueue<Activity> activities
 			= new PriorityQueue<>(
 					Comparator.comparing(Activity::getInactivity));
 
-		public WatchdogTimer(long timeout) {
+		// Repositorio de claves global:
+		private Synchronizer sync;
 
-			if (timeout < 0)
-				throw new IllegalArgumentException();
+		@Inject
+		public WatchdogTimer(final Synchronizer sync) {
 
-			this.timeout = timeout;
+			this.sync = sync;
 		}
 
 		/*
@@ -47,6 +50,19 @@
 		public long getTimeout() {
 
 			return timeout;
+		}
+
+		/*
+		** Setea el nuevo umbral (timeout) para cerrar canales
+		** inactivos. El valor se debe especificar en milisegundos.
+		*/
+
+		public void setTimeout(final long timeout) {
+
+			if (timeout < 0)
+				throw new IllegalArgumentException();
+
+			this.timeout = timeout;
 		}
 
 		/*
@@ -118,6 +134,7 @@
 		private void close(SelectionKey key) {
 
 			key.cancel();
+			sync.delete(key);
 			Channel channel = key.channel();
 			if (channel.isOpen()) {
 

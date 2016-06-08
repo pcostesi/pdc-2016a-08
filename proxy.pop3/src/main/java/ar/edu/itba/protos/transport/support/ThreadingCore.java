@@ -81,10 +81,21 @@
 
 		public void submit(final Handler handler, final SelectionKey key) {
 
-			// TODO: Hacer esta cosa...
+			// Almacenar la clave y suspender sus canales:
 			sync.save(key);
-			handler.handle(key);
-			sync.restore(key);
+			sync.suspend(key);
+			handler.onSubmit(key);
+
+			// Despachar una nueva tarea en algún worker:
+			pool.execute(new Runnable() {
+
+				public void run() {
+
+					handler.handle(key);
+					handler.onResume(key);
+					sync.restore(key);
+				}
+			});
 		}
 
 		private boolean terminate(final long timeout)

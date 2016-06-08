@@ -34,6 +34,9 @@
 		private static final Logger logger
 			= LoggerFactory.getLogger(ReadHandler.class);
 
+		// Esta constante indica que el stream se ha cerrado:
+		private static final int BROKEN_PIPE = -1;
+
 		// Repositorio global de claves:
 		private final Synchronizer sync;
 
@@ -43,8 +46,26 @@
 			this.sync = sync;
 		}
 
-		// Esta constante indica que el stream se ha cerrado:
-		private static final int BROKEN_PIPE = -1;
+		public void onSubmit(SelectionKey key) {
+
+			Attachment attachment = (Attachment) key.attachment();
+			SelectionKey upstream = attachment.getUpstream();
+
+			if (upstream != null) {
+
+				sync.save(upstream);
+				sync.suspend(upstream);
+			}
+		}
+
+		public void onResume(SelectionKey key) {
+
+			Attachment attachment = (Attachment) key.attachment();
+			SelectionKey upstream = attachment.getUpstream();
+
+			if (upstream != null)
+				sync.restore(upstream);
+		}
 
 		/*
 		** Procesa el evento para el cual está subscripto. En este

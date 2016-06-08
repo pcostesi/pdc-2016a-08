@@ -12,6 +12,7 @@
 	import com.google.inject.Inject;
 	import com.google.inject.Singleton;
 
+	import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
 	import ar.edu.itba.protos.transport.support.AttachmentFactory;
@@ -45,6 +46,15 @@
 		}
 
 		/*
+		** No es necesario implementar estas funcionalidades
+		** debido a que 'ThreadingCore' ya se encarga lo
+		** suficiente.
+		*/
+
+		public void onSubmit(SelectionKey key) {}
+		public void onResume(SelectionKey key) {}
+
+		/*
 		** Procesa el evento para el cual está subscripto. En este
 		** caso, el evento es de aceptación.
 		*/
@@ -66,13 +76,16 @@
 					// Registro el nuevo cliente y sus datos:
 					SelectionKey downstream = socket
 						.configureBlocking(false)
-						.register(
-							key.selector(),
-							getOptions(attachment),
-							attachment);
+						.register(key.selector(), 0, attachment);
 
 					// Especifico el flujo que identifica este canal:
 					attachment.setDownstream(downstream);
+
+					// El 'attachment' sabe donde se almacenan sus claves:
+					attachment.setSynchronizer(sync);
+
+					// Configura los eventos para este canal:
+					setOptions(attachment, downstream);
 				}
 				else throw new IOException();
 			}
@@ -101,19 +114,27 @@
 		** crear el mismo a través de una fábrica (AttachmentFactory).
 		*/
 
-		private int getOptions(Attachment attachment) {
+		private void setOptions(Attachment attachment, SelectionKey key) {
 
-			int options = SelectionKey.OP_READ;
+			/*
+			** En este caso utilizamos los métodos provistos por 'Event'
+			** en lugar de utilziar el 'Synchronizer', debido a que la
+			** clave es nueva, todavía no se encuentra en el repositorio,
+			** y además, el canal creado no tiene relación alguna con el
+			** canal del servidor (ServerSocketChannel).
+			*/
+
+			int options = Event.READ.getOptions();
 			if (attachment != null) {
 
 				attachment.getOutboundBuffer().flip();
-				if (attachment.hasOutboundData()) {
 
-					options |= SelectionKey.OP_WRITE;
-				}
+				if (attachment.hasOutboundData())
+					options |= Event.WRITE.getOptions();
+
 				attachment.getOutboundBuffer().compact();
 			}
-			return options;
+			Event.enable(key, options);
 		}
 
 		/*

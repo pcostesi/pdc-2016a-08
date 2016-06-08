@@ -195,4 +195,30 @@
 				keys.remove(key);
 			}
 		}
+
+		/**
+		* <p>Deshabilita todas las opciones de interés de la clave
+		* especificada, lo que impide que la clave sea seleccionada
+		* nuevamente, hasta que alguno de sus eventos sea rehabilitado,
+		* ya sea de forma manual, o a través de una llamada al
+		* método <b>restore</b>.</p>
+		*
+		* @param key
+		*	La clave a suspender.
+		*
+		* @throws IllegalArgumentException
+		*	En caso de que la clave sea <i>null</i>.
+		*/
+
+		public void suspend(final SelectionKey key) {
+
+			if (key == null)
+				throw new IllegalArgumentException();
+
+			try {
+
+				key.interestOps(0);
+			}
+			catch (CancelledKeyException spurious) {}
+		}
 	}

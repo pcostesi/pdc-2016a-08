@@ -32,6 +32,9 @@
 		// Canal asociado al servidor destino:
 		protected SelectionKey upstream = null;
 
+		// Repositorio global de claves:
+		protected Synchronizer sync = null;
+
 		/*
 		** Devuelve el buffer interno que se usa para realizar IO
 		** sobre el stream de bytes de entrada (inbound). Es
@@ -157,6 +160,18 @@
 		}
 
 		/*
+		** Permite especificar en qué repositorio se almacenan las
+		** claves de este 'attachment'. El repositorio se puede
+		** utilizar para manipular los canales 'upstream' y
+		** 'downstream'.
+		*/
+
+		public void setSynchronizer(final Synchronizer sync) {
+
+			this.sync = sync;
+		}
+
+		/*
 		** Setea la clave de selección de este mismo canal.
 		*/
 
@@ -248,11 +263,18 @@
 					.configureBlocking(false)
 					.register(
 						getDownstream().selector(),
-						SelectionKey.OP_CONNECT,
+						0,
 						attachment);
 
 				// Especifico la clave del nuevo stream:
 				attachment.setDownstream(key);
+
+				// El repositorio de claves usado:
+				attachment.setSynchronizer(sync);
+
+				// Almaceno el nuevo canal (y lo configuro):
+				sync.save(key);
+				sync.enable(key, Event.CONNECT);
 
 				// NO TOCAR!!!!
 				if (socket.connect(address)) {
@@ -316,10 +338,12 @@
 			if (stream != null) {
 
 				stream.cancel();
+				sync.delete(stream);
 				SocketChannel socket = (SocketChannel) stream.channel();
 				try {
 
-					if (socket.isOpen()) socket.close();
+					if (socket.isOpen())
+						socket.close();
 				}
 				catch (IOException spurious) {}
 

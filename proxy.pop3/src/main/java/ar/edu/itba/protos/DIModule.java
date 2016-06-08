@@ -10,6 +10,7 @@ import ar.edu.itba.protos.transport.reactor.Reactor;
 import ar.edu.itba.protos.transport.support.Server;
 import ar.edu.itba.protos.transport.support.Synchronizer;
 import ar.edu.itba.protos.transport.support.ThreadingCore;
+import ar.edu.itba.protos.transport.support.WatchdogTimer;
 
 /**
  * Injector config object. We use a single, app-wide config because the project
@@ -28,6 +29,7 @@ public class DIModule extends AbstractModule {
     protected void configure() {
         bind(POP3Server.class);
         bind(Server.class);
+        bind(WatchdogTimer.class);
         bind(Reactor.class);
         bind(ThreadingCore.class);
         bind(Synchronizer.class);

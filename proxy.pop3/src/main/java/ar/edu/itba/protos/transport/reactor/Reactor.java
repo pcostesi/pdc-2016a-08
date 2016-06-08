@@ -53,6 +53,7 @@
 		@Inject
 		private Reactor(final ThreadingCore core) {
 
+			// Permite despachar handlers en paralelo:
 			this.core = core;
 
 			// La estructura de búsqueda de eventos es un mapa:
