@@ -1,7 +1,6 @@
 package ar.edu.itba.protos.config;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -21,8 +20,12 @@ public class UserMapping {
     @XmlElement(name = "default-upstream")
     public Upstream defaultUpstream;
 
-    public Optional<Upstream> getMappingForUsername(final String username) {
-        return Optional.ofNullable(userMappings.get(username));
+    public Upstream getMappingForUsername(final String username) {
+        final Upstream mapping = userMappings.get(username);
+        if (mapping == null) {
+            return defaultUpstream;
+        }
+        return mapping;
     }
 
     public void mapUserToUpstream(final String username, final Upstream upstream) {
