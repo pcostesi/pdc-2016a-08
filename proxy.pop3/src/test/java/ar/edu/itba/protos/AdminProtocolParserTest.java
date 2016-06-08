@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import ar.edu.itba.protos.protocol.admin.parser.AdminProtocolParser;
+import ar.edu.itba.protos.protocol.admin.AdminProtocolParser;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -15,7 +15,7 @@ public class AdminProtocolParserTest extends TestCase {
      * @return the suite of tests being tested
      */
     public static Test suite() {
-        return new TestSuite( AdminProtocolParserTest.class );
+        return new TestSuite(AdminProtocolParserTest.class);
     }
 
     public void testTheTokenizerCorrectlyParsesOneCommand() {
@@ -107,7 +107,7 @@ public class AdminProtocolParserTest extends TestCase {
     }
 
     public void testTheParserCorrectlyParsesIncompleteBuffers() {
-        final ByteBuffer commandBuffer = ByteBuffer.wrap("map root@localhost localhost 110\r\nunm"
+        final ByteBuffer commandBuffer = ByteBuffer.wrap("map root@localhost localhost 110\r\nunmap u"
                 .getBytes(StandardCharsets.US_ASCII));
         final AdminProtocolParser parser = new AdminProtocolParser();
 
@@ -116,7 +116,7 @@ public class AdminProtocolParserTest extends TestCase {
         assertTrue(parsedLines.get(0) != null);
         assertTrue(parsedLines.get(0).length == 4);
 
-        commandBuffer.put("ap user\r\n".getBytes());
+        commandBuffer.put("ser\r\n".getBytes());
         commandBuffer.flip();
 
         final List<String[]> parsedLinesAgain = parser.parse(commandBuffer);
