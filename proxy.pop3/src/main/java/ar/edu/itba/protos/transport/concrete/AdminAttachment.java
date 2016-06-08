@@ -19,50 +19,46 @@ import ar.edu.itba.protos.transport.support.Interceptor;
  */
 
 public final class AdminAttachment extends Attachment implements Interceptor {
-	private static final Logger logger = LoggerFactory.getLogger(AdminAttachment.class);
+    private static final Logger logger = LoggerFactory.getLogger(AdminAttachment.class);
 
-	// El buffer de entrada y salida:
-	private final ByteBuffer ioBuffer = ByteBuffer.allocate(AdminAttachmentFactory.BUFFER_SIZE);
+    // El buffer de entrada y salida:
+    private final ByteBuffer ioBuffer = ByteBuffer.allocate(AdminAttachmentFactory.BUFFER_SIZE);
 
-	@Override
-	public ByteBuffer getInboundBuffer() {
-		return ioBuffer;
-	}
+    @Override
+    public ByteBuffer getInboundBuffer() {
+        return ioBuffer;
+    }
 
-	@Override
-	public ByteBuffer getOutboundBuffer() {
-		return ioBuffer;
-	}
+    @Override
+    public ByteBuffer getOutboundBuffer() {
+        return ioBuffer;
+    }
 
-	@Override
-	public Interceptor getInterceptor() {
-		return this;
-	}
+    @Override
+    public Interceptor getInterceptor() {
+        return this;
+    }
 
-	@Override
-	public void setDownstream(SelectionKey downstream) {
-		// Realiza un loop-back con el cliente:
-		super.setDownstream(downstream);
-		setUpstream(downstream);
-	}
+    @Override
+    public void setDownstream(final SelectionKey downstream) {
+        // Realiza un loop-back con el cliente:
+        super.setDownstream(downstream);
+        setUpstream(downstream);
+    }
 
-	@Override
-	public void onUnplug(Event event) {
-		logger.debug("> Admin.onUnplug({})", event);
-	}
+    @Override
+    public void onUnplug(final Event event) {
+        logger.debug("> Admin.onUnplug({})", event);
+    }
 
-	/*
-	 ** Este método se ejecuta cada vez que un nuevo flujo de bytes se presenta
-	 * en el canal asociado (inbound). Este método puede modificar el buffer
-	 * libremente, inclusive modificando el límite, siempre y cuando este no se
-	 * reduzca por debajo de la posición recibida.
-	 */
-	public void consume(ByteBuffer buffer) {
-		//XXX: if the only thing this method does is to call Interceptor.consume,
-		// just add it to the abstract class O.o
-		
-		logger.trace("Consuming from buffer {}", buffer.toString());
-		// Solo imprime en pantalla lo leído:
-		Interceptor.DEFAULT.consume(buffer);
-	}
+    /*
+     ** Este método se ejecuta cada vez que un nuevo flujo de bytes se presenta
+     * en el canal asociado (inbound). Este método puede modificar el buffer
+     * libremente, inclusive modificando el límite, siempre y cuando este no se
+     * reduzca por debajo de la posición recibida.
+     */
+    @Override
+    public void consume(final ByteBuffer buffer) {
+
+    }
 }
