@@ -23,7 +23,7 @@ public class AdminProtocolParserTest extends TestCase {
                 .getBytes(StandardCharsets.US_ASCII));
         final AdminProtocolParser parser = new AdminProtocolParser();
         final List<String> parsedTokens = parser.tokenize(commandBuffer);
-        assertTrue(parsedTokens.size() == 5);
+        assertEquals(parsedTokens.size(), 5);
         assertEquals(parsedTokens.get(0), "map");
         assertEquals(parsedTokens.get(1), "root@localhost");
         assertEquals(parsedTokens.get(2), "localhost");
@@ -37,7 +37,7 @@ public class AdminProtocolParserTest extends TestCase {
                         .getBytes(StandardCharsets.US_ASCII));
         final AdminProtocolParser parser = new AdminProtocolParser();
         final List<String> parsedTokens = parser.tokenize(commandBuffer);
-        assertTrue(parsedTokens.size() == 10);
+        assertEquals(parsedTokens.size(), 10);
 
         assertEquals(parsedTokens.get(0), "map");
         assertEquals(parsedTokens.get(1), "root@localhost");
@@ -58,7 +58,7 @@ public class AdminProtocolParserTest extends TestCase {
                         .getBytes(StandardCharsets.US_ASCII));
         final AdminProtocolParser parser = new AdminProtocolParser();
         final List<String> parsedTokens = parser.tokenize(commandBuffer);
-        assertTrue(parsedTokens.size() == 11);
+        assertEquals(parsedTokens.size(), 11);
 
         assertEquals(parsedTokens.get(0), "map");
         assertEquals(parsedTokens.get(1), "root@localhost");
@@ -79,7 +79,7 @@ public class AdminProtocolParserTest extends TestCase {
                 .getBytes(StandardCharsets.US_ASCII));
         final AdminProtocolParser parser = new AdminProtocolParser();
         final List<String[]> parsedTokens = parser.parse(commandBuffer);
-        assertTrue(parsedTokens.size() == 1);
+        assertEquals(parsedTokens.size(), 1);
         assertTrue(parsedTokens.get(0) != null);
         assertTrue(parsedTokens.get(0).length == 4);
     }
@@ -89,7 +89,7 @@ public class AdminProtocolParserTest extends TestCase {
                 .getBytes(StandardCharsets.US_ASCII));
         final AdminProtocolParser parser = new AdminProtocolParser();
         final List<String[]> parsedLines = parser.parse(commandBuffer);
-        assertTrue(parsedLines.size() == 1);
+        assertEquals(parsedLines.size(), 1);
         assertTrue(parsedLines.get(0) != null);
         assertTrue(parsedLines.get(0).length == 4);
     }
@@ -101,7 +101,7 @@ public class AdminProtocolParserTest extends TestCase {
         final AdminProtocolParser parser = new AdminProtocolParser();
         final List<String[]> parsedTokens = parser.parse(commandBuffer);
 
-        assertTrue(parsedTokens.size() == 2);
+        assertEquals(parsedTokens.size(), 2);
         assertTrue(parsedTokens.get(0) != null);
         assertTrue(parsedTokens.get(0).length == 4);
     }
@@ -112,7 +112,7 @@ public class AdminProtocolParserTest extends TestCase {
         final AdminProtocolParser parser = new AdminProtocolParser();
 
         final List<String[]> parsedLines = parser.parse(commandBuffer);
-        assertTrue(parsedLines.size() == 1);
+        assertEquals(parsedLines.size(), 1);
         assertTrue(parsedLines.get(0) != null);
         assertTrue(parsedLines.get(0).length == 4);
 
@@ -120,7 +120,7 @@ public class AdminProtocolParserTest extends TestCase {
         commandBuffer.flip();
 
         final List<String[]> parsedLinesAgain = parser.parse(commandBuffer);
-        assertTrue(parsedLinesAgain.size() == 1);
+        assertEquals(parsedLinesAgain.size(), 1);
         assertTrue(parsedLinesAgain.get(0) != null);
         assertTrue(parsedLinesAgain.get(0).length == 2);
 
