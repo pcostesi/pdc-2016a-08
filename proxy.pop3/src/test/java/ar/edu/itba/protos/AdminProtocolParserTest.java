@@ -20,7 +20,7 @@ public class AdminProtocolParserTest extends TestCase {
 
     public void testTheTokenizerCorrectlyParsesOneCommand() {
         final ByteBuffer commandBuffer = ByteBuffer.wrap("map root@localhost localhost 110\r\n"
-                .getBytes(StandardCharsets.UTF_8));
+                .getBytes(StandardCharsets.US_ASCII));
         final AdminProtocolParser parser = new AdminProtocolParser();
         final List<String> parsedTokens = parser.tokenize(commandBuffer);
         assertTrue(parsedTokens.size() == 5);
@@ -34,7 +34,7 @@ public class AdminProtocolParserTest extends TestCase {
     public void testTheTokenizerCorrectlyParsesTwoCommands() {
         final ByteBuffer commandBuffer = ByteBuffer
                 .wrap("map root@localhost localhost 110\r\nmap root@localhost localhost 110\r\n"
-                        .getBytes(StandardCharsets.UTF_8));
+                        .getBytes(StandardCharsets.US_ASCII));
         final AdminProtocolParser parser = new AdminProtocolParser();
         final List<String> parsedTokens = parser.tokenize(commandBuffer);
         assertTrue(parsedTokens.size() == 10);
@@ -55,7 +55,7 @@ public class AdminProtocolParserTest extends TestCase {
     public void testTheTokenizerCorrectlyParsesWhitespace() {
         final ByteBuffer commandBuffer = ByteBuffer
                 .wrap("map   root@localhost\tlocalhost 110\r\n\r\nmap root@localhost localhost 110\r\n       "
-                        .getBytes(StandardCharsets.UTF_8));
+                        .getBytes(StandardCharsets.US_ASCII));
         final AdminProtocolParser parser = new AdminProtocolParser();
         final List<String> parsedTokens = parser.tokenize(commandBuffer);
         assertTrue(parsedTokens.size() == 11);
@@ -72,5 +72,64 @@ public class AdminProtocolParserTest extends TestCase {
         assertEquals(parsedTokens.get(8), "localhost");
         assertEquals(parsedTokens.get(9), "110");
         assertEquals(parsedTokens.get(10), null);
+    }
+
+    public void testTheParserCorrectlyParsesOneLine() {
+        final ByteBuffer commandBuffer = ByteBuffer.wrap("map root@localhost localhost 110\r\n"
+                .getBytes(StandardCharsets.US_ASCII));
+        final AdminProtocolParser parser = new AdminProtocolParser();
+        final List<String[]> parsedTokens = parser.parse(commandBuffer);
+        assertTrue(parsedTokens.size() == 1);
+        assertTrue(parsedTokens.get(0) != null);
+        assertTrue(parsedTokens.get(0).length == 4);
+    }
+
+    public void testTheParserCorrectlyParsesOneLineAndAHalf() {
+        final ByteBuffer commandBuffer = ByteBuffer.wrap("map root@localhost localhost 110\r\nmap?"
+                .getBytes(StandardCharsets.US_ASCII));
+        final AdminProtocolParser parser = new AdminProtocolParser();
+        final List<String[]> parsedLines = parser.parse(commandBuffer);
+        assertTrue(parsedLines.size() == 1);
+        assertTrue(parsedLines.get(0) != null);
+        assertTrue(parsedLines.get(0).length == 4);
+    }
+
+    public void testTheParserCorrectlyParsesManyLines() {
+        final ByteBuffer commandBuffer = ByteBuffer
+                .wrap("map   root@localhost\tlocalhost 110\r\n\r\nmap root@localhost localhost 110\r\n   \r\n    "
+                        .getBytes(StandardCharsets.US_ASCII));
+        final AdminProtocolParser parser = new AdminProtocolParser();
+        final List<String[]> parsedTokens = parser.parse(commandBuffer);
+
+        assertTrue(parsedTokens.size() == 2);
+        assertTrue(parsedTokens.get(0) != null);
+        assertTrue(parsedTokens.get(0).length == 4);
+    }
+
+    public void testTheParserCorrectlyParsesIncompleteBuffers() {
+        final ByteBuffer commandBuffer = ByteBuffer.wrap("map root@localhost localhost 110\r\nunm"
+                .getBytes(StandardCharsets.US_ASCII));
+        final AdminProtocolParser parser = new AdminProtocolParser();
+
+        final List<String[]> parsedLines = parser.parse(commandBuffer);
+        assertTrue(parsedLines.size() == 1);
+        assertTrue(parsedLines.get(0) != null);
+        assertTrue(parsedLines.get(0).length == 4);
+
+        commandBuffer.put("ap user\r\n".getBytes());
+        commandBuffer.flip();
+
+        final List<String[]> parsedLinesAgain = parser.parse(commandBuffer);
+        assertTrue(parsedLinesAgain.size() == 1);
+        assertTrue(parsedLinesAgain.get(0) != null);
+        assertTrue(parsedLinesAgain.get(0).length == 2);
+
+        commandBuffer.put("map?\r\n".getBytes());
+        commandBuffer.flip();
+
+        final List<String[]> parsedLinesYetAgain = parser.parse(commandBuffer);
+        assertTrue(parsedLinesYetAgain.size() == 1);
+        assertTrue(parsedLinesYetAgain.get(0) != null);
+        assertTrue(parsedLinesYetAgain.get(0).length == 1);
     }
 }

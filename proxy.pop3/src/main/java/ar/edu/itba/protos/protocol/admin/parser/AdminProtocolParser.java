@@ -1,11 +1,9 @@
 package ar.edu.itba.protos.protocol.admin.parser;
 
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 public class AdminProtocolParser {
 
@@ -14,20 +12,20 @@ public class AdminProtocolParser {
     }
 
     private ParserState state = ParserState.WHITESPACE;
-    private final List<String> pendingTokens = new ArrayList<>();
+    private List<String> pendingTokens = new ArrayList<>();
 
     /**
      * Ugh. This is ugly. If I had time, I would do a StateMachineBuilder class
      * that would build a StateMachine which could abstract this.
      */
+    // TODO(@pcostesi) Extract to StateMachine + Builder
     public List<String> tokenize(final ByteBuffer buffer) {
-        final CharBuffer cb = StandardCharsets.UTF_8.decode(buffer);
         final List<String> tokens = new ArrayList<>();
-        int tokenStart = cb.position();
+        int tokenStart = buffer.position();
+        int position = tokenStart;
 
-        for (int position = cb.position(); position < cb.remaining(); position++) {
-            final char current = cb.get(position);
-
+        for (position = buffer.position(); position < buffer.limit(); position++) {
+            final char current = (char) buffer.get(position);
             switch (state) {
                 case WHITESPACE:
                     tokenStart = position;
@@ -43,7 +41,7 @@ public class AdminProtocolParser {
 
                 case IN_TOKEN:
                     if (current == '\r' || current == '\n' || Character.isWhitespace(current)) {
-                        tokens.add(String.copyValueOf(cb.array(), tokenStart, position - tokenStart));
+                        tokens.add(new String(Arrays.copyOfRange(buffer.array(), tokenStart, position)));
                         tokenStart = position;
 
                         if (current == '\r') {
@@ -82,6 +80,8 @@ public class AdminProtocolParser {
             }
 
         }
+        buffer.position(tokenStart);
+        buffer.compact();
         return tokens;
     }
 
@@ -92,8 +92,20 @@ public class AdminProtocolParser {
      * @param buffer
      * @return
      */
-    public Optional<? super Command> parse(final ByteBuffer buffer) {
+    public List<String[]> parse(final ByteBuffer buffer) {
         pendingTokens.addAll(tokenize(buffer));
-        return Optional.empty();
+        final List<String[]> commands = new ArrayList<>();
+        int crlf = 0;
+        while (crlf != -1) {
+            crlf = pendingTokens.indexOf(null);
+            if (crlf == -1) {
+                break;
+            } else if (crlf > 0) {
+                commands.add(pendingTokens.subList(0, crlf).toArray(new String[] {}));
+            }
+            // TODO(@pcostesi) OPTIMIZE!
+            pendingTokens = new ArrayList<String>(pendingTokens.subList(crlf + 1, pendingTokens.size()));
+        }
+        return commands;
     }
 }
