@@ -6,11 +6,16 @@ import java.util.Map;
 
 import javax.inject.Singleton;
 
+import ar.edu.itba.protos.config.ConfigurationLoader;
+import ar.edu.itba.protos.config.UserMapping;
+
 @Singleton
 public class CommandExecutor {
     private final static Map<AdminProtocolToken, Command> commands = new HashMap<>();
     public final static String EMPTY_CMD = "Empty command.";
     public final static String NO_SUCH_CMD = "No such command.";
+
+    private static UserMapping mapping = ConfigurationLoader.getUserMapping();
 
     public static String excute(final String... line) {
         if (line.length == 0) {
@@ -29,9 +34,14 @@ public class CommandExecutor {
         return cmdResult;
     }
 
-    {
+    static {
         commands.put(AdminProtocolToken.MAP_USER, (params) -> {
-            return ":)";
+            if (params.length != 3) {
+                throw new CommandException("Invalid number of parameters: " + params.length);
+            }
+
+            mapping.mapUserToUpstream(params[0], params[1], Integer.parseInt(params[2]));
+            return String.format("%s -> %s:%s", params[0], params[1], params[2]);
         });
     }
 }
