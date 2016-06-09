@@ -2,6 +2,8 @@ package ar.edu.itba.protos;
 
 import com.google.inject.AbstractModule;
 
+import ar.edu.itba.protos.protocol.admin.AdminProtocolParser;
+import ar.edu.itba.protos.protocol.admin.CommandExecutor;
 import ar.edu.itba.protos.transport.reactor.Reactor;
 import ar.edu.itba.protos.transport.support.Server;
 
@@ -16,6 +18,8 @@ public class DIModule extends AbstractModule {
         bind(POP3Server.class);
         bind(Server.class);
         bind(Reactor.class);
+        bind(AdminProtocolParser.class);
+        bind(CommandExecutor.class);
     }
 
 }

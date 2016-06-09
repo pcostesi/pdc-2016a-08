@@ -1,4 +1,4 @@
-package ar.edu.itba.protos.protocol.admin.parser;
+package ar.edu.itba.protos.protocol.admin;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

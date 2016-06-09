@@ -1,4 +1,4 @@
-package ar.edu.itba.protos.protocol.admin.parser;
+package ar.edu.itba.protos.protocol.admin;
 
 import java.util.Arrays;
 
