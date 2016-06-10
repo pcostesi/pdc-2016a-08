@@ -92,5 +92,7 @@ public final class POP3Server {
 
         // Bloquear por completo el rector:
         demultiplexor.block();
+
+        logger.info(Message.SHUTDOWN_COMPLETE.getMessage());
     }
 }

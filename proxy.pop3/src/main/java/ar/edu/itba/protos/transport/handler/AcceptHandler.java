@@ -21,6 +21,7 @@
 	import ar.edu.itba.protos.transport.support.Message;
 	import ar.edu.itba.protos.transport.support.Server;
 	import ar.edu.itba.protos.transport.support.Synchronizer;
+	import ar.edu.itba.protos.transport.support.WatchdogTimer;
 
 		/**
 		* <p>Se encarga de procesar los eventos de aceptación.
@@ -42,10 +43,16 @@
 		// Repositorio global de claves:
 		private final Synchronizer sync;
 
+		// Monitor de inactividad:
+		private final WatchdogTimer watchdog;
+
 		@Inject
-		private AcceptHandler(final Synchronizer sync) {
+		private AcceptHandler(
+					final Synchronizer sync,
+					final WatchdogTimer watchdog) {
 
 			this.sync = sync;
+			this.watchdog = watchdog;
 		}
 
 		/*
@@ -101,6 +108,9 @@
 						Event.enable(
 							downstream,
 							attachment.getInitialOptions());
+
+						// Monitoreo el nuevo canal:
+						watchdog.update(downstream);
 					}
 				}
 				else throw new IOException();

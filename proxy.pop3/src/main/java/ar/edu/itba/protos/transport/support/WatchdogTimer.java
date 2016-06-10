@@ -9,6 +9,7 @@
 	import org.slf4j.LoggerFactory;
 
 	import com.google.inject.Inject;
+	import com.google.inject.Singleton;
 
 		/**
 		* Un 'watchdog-timer' permite manipular el nivel de
@@ -22,6 +23,7 @@
 		* específica para cerrar SocketChannel's.
 		*/
 
+	@Singleton
 	public final class WatchdogTimer {
 
 		// Logger:
@@ -40,7 +42,7 @@
 		private Synchronizer sync;
 
 		@Inject
-		public WatchdogTimer(final Synchronizer sync) {
+		private WatchdogTimer(final Synchronizer sync) {
 
 			this.sync = sync;
 		}
@@ -97,7 +99,7 @@
 		** de ellas, cancela su clave asociada.
 		*/
 
-		public synchronized void killLazyActivities() {
+		public void killLazyActivities() {
 
 			long now = System.currentTimeMillis();
 			while (!activities.isEmpty()) {
@@ -141,7 +143,7 @@
 		** clave especificada.
 		*/
 
-		public synchronized void update(SelectionKey key) {
+		public void update(SelectionKey key) {
 
 			removeActivity(key);
 			addActivity(key);

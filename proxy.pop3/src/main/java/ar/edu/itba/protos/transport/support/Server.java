@@ -32,7 +32,7 @@
 	public final class Server {
 
 		// TODO: obtener por configuración Pablo!!!
-		/**/private static final long TIMEOUT = 10000;
+		/**/private static final long TIMEOUT = 5000;
 		/**/private static final long LAZY_INTERVAL_DETECTION = 1000;
 
 		// Logger:
@@ -89,22 +89,32 @@
 		** puede o no poseer un 'attachment'. En caso de que no posea,
 		** debe utilizarse algún mecanismo adicional para diferenciar
 		** en cual de las direcciones se recibió una petición de conexión.
-		** Devuelve 'true' si pudo agregar el canal.
 		*/
 
 		public Server addListener(
 				InetSocketAddress address,
-				AttachmentFactory factory) throws IOException {
+				AttachmentFactory factory) {
 
-			logger.debug("Attaching listen socket {} with {}", address, factory);
+			try {
 
-			ServerSocketChannel channel = ServerSocketChannel.open();
-			channel.configureBlocking(false);
-			channel.socket().bind(address);
-			channel.register(selector, SelectionKey.OP_ACCEPT, factory);
+				ServerSocketChannel channel = ServerSocketChannel.open();
+				channel.configureBlocking(false);
+				channel.socket().bind(address);
+				channel.register(selector, SelectionKey.OP_ACCEPT, factory);
+				listeners.add(channel);
+			}
+			catch (IllegalArgumentException exception) {
 
-			listeners.add(channel);
+				logger.error(
+					Message.INVALID_ADDRESS.getMessage(),
+					address);
+			}
+			catch (IOException exception) {
 
+				logger.error(
+					Message.CANNOT_LISTEN.getMessage(),
+					address);
+			}
 			return this;
 		}
 
@@ -118,8 +128,18 @@
 				String IP, int port,
 				AttachmentFactory factory) throws IOException {
 
-			InetSocketAddress address = new InetSocketAddress(IP, port);
-			return addListener(address, factory);
+			try {
+
+				InetSocketAddress address = new InetSocketAddress(IP, port);
+				return addListener(address, factory);
+			}
+			catch (IllegalArgumentException exception) {
+
+				logger.error(
+					Message.INVALID_ADDRESS.getMessage(),
+					IP + ":" + port);
+			}
+			return this;
 		}
 
 		/*
@@ -129,6 +149,8 @@
 		*/
 
 		public void dispatch() throws IOException {
+
+			logger.info(toString());
 
 			// Levanto el monitor de inactividad:
 			runWatchdog();
@@ -169,6 +191,8 @@
 
 		public void shutdown() throws IOException {
 
+			logger.info(Message.SERVER_SHUTDOWN.getMessage());
+
 			Set<SelectionKey> keys = selector.keys();
 
 			// Cierra el monitoreo de actividades:
@@ -189,27 +213,32 @@
 			if (selector.isOpen()) selector.close();
 		}
 
-		/*
-		** Devuelve 'true' si la clave está activa para el
-		** evento ACCEPT, es decir, que el canal se encuentra
-		** a disposición de conexiones entrantes, tal cual lo
-		** hace un 'ServerSocketChannel' (listener).
-		*/
-
-		private boolean isListener(SelectionKey key) {
+		@Override
+		public String toString() {
 
 			try {
 
-				return 0 != (key.interestOps() & SelectionKey.OP_ACCEPT);
+				StringBuilder builder = new StringBuilder();
+				builder.append("Escuchando en las direcciones {");
+
+				for (ServerSocketChannel listener : listeners) {
+
+					builder.append(listener.getLocalAddress().toString());
+					builder.append(", ");
+				}
+
+				if (0 < getListeners()) {
+
+					builder.deleteCharAt(builder.length() - 1);
+					builder.deleteCharAt(builder.length() - 1);
+				}
+
+				builder.append("}.");
+				return builder.toString();
 			}
-			catch (CancelledKeyException exception) {
+			catch (IOException exception) {
 
-				logger.error(
-					Message.UNEXPECTED_UNPLUG.getMessage(),
-					tryToResolveAddress(key));
-
-				close(key);
-				return false;
+				return Message.UNKNOWN_INTERFACES.getMessage();
 			}
 		}
 
@@ -257,6 +286,30 @@
 			catch (IOException
 				| NullPointerException spurious) {}
 			return Message.UNKNOWN_ADDRESS.getMessage();
+		}
+
+		/*
+		** Devuelve 'true' si la clave está activa para el
+		** evento ACCEPT, es decir, que el canal se encuentra
+		** a disposición de conexiones entrantes, tal cual lo
+		** hace un 'ServerSocketChannel' (listener).
+		*/
+
+		private boolean isListener(SelectionKey key) {
+
+			try {
+
+				return 0 != (key.interestOps() & SelectionKey.OP_ACCEPT);
+			}
+			catch (CancelledKeyException exception) {
+
+				logger.error(
+					Message.UNEXPECTED_UNPLUG.getMessage(),
+					tryToResolveAddress(key));
+
+				close(key);
+				return false;
+			}
 		}
 
 		/*

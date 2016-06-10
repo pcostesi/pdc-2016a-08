@@ -20,6 +20,10 @@
 		** Mensajes informativos (no son errores):
 		*/
 
+		SHUTDOWN_COMPLETE
+			("El servidor se desconectó por completo. Adiós!"),
+		SERVER_SHUTDOWN
+			("El servidor se está cerrando."),
 		TIMEOUT_TRIGGER
 			("El umbral de inactividad fue actualizado a {} segundos."),
 		KILL_BY_LAZY
@@ -37,19 +41,21 @@
 			("Un canal se desconectó abruptamente ({})."),
 		UNKNOWN_ADDRESS
 			("dirección desconocida"),
+		UNKNOWN_INTERFACES
+			("No se pueden determinar las interfaces abiertas."),
 
 		/*
 		** Errores asociados a la exposición de un servidor:
 		*/
 
+		INVALID_ADDRESS
+			("La dirección especificada es inválida ({})."),
 		CANNOT_RAISE
 			("Error interno. No se pudo levantar el servidor."),
-		CANNOT_BIND
-			("La dirección especificada ya se está usando."),
 		UNRESOLVED_ADDRESS
 			("La dirección remota no se pudo resolver ({})."),
 		CANNOT_LISTEN
-			("No se pudo agregar el nuevo 'listener'."),
+			("Error de binding. No se pudo escuchar en la dirección {}."),
 
 		/*
 		** Errores asociados a la clase 'AcceptHandler':
