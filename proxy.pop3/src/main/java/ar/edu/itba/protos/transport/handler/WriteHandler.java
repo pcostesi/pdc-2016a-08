@@ -15,7 +15,6 @@
 	import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
-	import ar.edu.itba.protos.transport.support.Message;
 	import ar.edu.itba.protos.transport.support.Synchronizer;
 
 		/**
@@ -47,22 +46,19 @@
 
 		public void onSubmit(SelectionKey key) {
 
-			Attachment attachment = (Attachment) key.attachment();
-			SelectionKey upstream = attachment.getUpstream();
+			SelectionKey upstream
+				= ((Attachment) key.attachment()).getUpstream();
 
-			if (upstream != null) {
-
+			if (key != upstream && upstream != null)
 				sync.save(upstream);
-				sync.suspend(upstream);
-			}
 		}
 
 		public void onResume(SelectionKey key) {
 
-			Attachment attachment = (Attachment) key.attachment();
-			SelectionKey upstream = attachment.getUpstream();
+			SelectionKey upstream
+				= ((Attachment) key.attachment()).getUpstream();
 
-			if (upstream != null)
+			if (key != upstream && upstream != null)
 				sync.restore(upstream);
 		}
 
@@ -103,11 +99,6 @@
 			}
 			catch (IOException exception) {
 
-				logger.error(
-					"Handle failed with code {}",
-					Message.SERVER_UNPLUGGED,
-					exception);
-
 				// Elimino la clave del repositorio:
 				sync.delete(key);
 
@@ -129,17 +120,12 @@
 
 		private void detectInbound(Attachment attachment) {
 
-			/*
-			** Podemos modificar el estado de la clave
-			** asociada al 'upstream', debido a que el método
-			** 'onSubmit()', garantiza que la misma se encuentre
-			** en el repositorio global.
-			*/
-
 			if (attachment.hasInboundData()) {
 
 				SelectionKey upstream = attachment.getUpstream();
-				sync.enable(upstream, Event.WRITE);
+
+				if (upstream != null)
+					sync.enable(upstream, Event.WRITE);
 			}
 		}
 	}

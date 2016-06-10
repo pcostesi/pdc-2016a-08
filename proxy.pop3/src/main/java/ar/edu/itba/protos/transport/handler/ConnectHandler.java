@@ -2,6 +2,8 @@
 	package ar.edu.itba.protos.transport.handler;
 
 	import java.io.IOException;
+	import java.net.ConnectException;
+	import java.nio.channels.ClosedChannelException;
 	import java.nio.channels.SelectionKey;
 
 	import org.slf4j.Logger;
@@ -14,6 +16,7 @@
 	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
 	import ar.edu.itba.protos.transport.support.Message;
+	import ar.edu.itba.protos.transport.support.Server;
 	import ar.edu.itba.protos.transport.support.Synchronizer;
 
 		/**
@@ -44,22 +47,19 @@
 
 		public void onSubmit(SelectionKey key) {
 
-			Attachment attachment = (Attachment) key.attachment();
-			SelectionKey upstream = attachment.getUpstream();
+			SelectionKey upstream
+				= ((Attachment) key.attachment()).getUpstream();
 
-			if (upstream != null) {
-
+			if (key != upstream && upstream != null)
 				sync.save(upstream);
-				sync.suspend(upstream);
-			}
 		}
 
 		public void onResume(SelectionKey key) {
 
-			Attachment attachment = (Attachment) key.attachment();
-			SelectionKey upstream = attachment.getUpstream();
+			SelectionKey upstream
+				= ((Attachment) key.attachment()).getUpstream();
 
-			if (upstream != null)
+			if (key != upstream && upstream != null)
 				sync.restore(upstream);
 		}
 
@@ -79,26 +79,38 @@
 				// Finalizo la conexión remota:
 				if (attachment.getSocket().finishConnect()) {
 
-					logger.debug("Connection established on {}", this);
+					logger.info(
+						Message.CONNECTION_SUCCEED.getMessage(),
+						Server.tryToResolveAddress(key));
 
 					// Prepara los eventos del canal:
 					sync.disable(key, Event.CONNECT);
-					sync.enable(key, Event.READ);
-					attachment.getOutboundBuffer().flip();
 
-					if (attachment.hasOutboundData())
-						sync.enable(key, Event.WRITE);
-
-					attachment.getOutboundBuffer().compact();
+					// Obtengo las opciones iniciales:
+					sync.enable(key, attachment.getInitialOptions());
 				}
-				else logger.debug("Pending connection on {}", this);
+				else logger.debug(
+					Message.PENDING_CONNECTION.getMessage(),
+					Server.tryToResolveAddress(key));
+			}
+			catch (ClosedChannelException exception) {
+
+				logger.error(
+					Message.UNEXPECTED_UNPLUG.getMessage(),
+					Server.tryToResolveAddress(key));
+			}
+			catch (ConnectException exception) {
+
+				logger.error(
+					Message.CONNECTION_TIMEOUT.getMessage(),
+					Server.tryToResolveAddress(key));
 			}
 			catch (IOException exception) {
 
+				exception.printStackTrace();
 				logger.error(
-					"Could not handle the connection: {}",
-					Message.CLOSED_PORT,
-					exception);
+					Message.CANNOT_FORWARD.getMessage(),
+					this.getClass().getSimpleName());
 			}
 		}
 	}

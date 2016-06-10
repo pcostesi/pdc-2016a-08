@@ -2,6 +2,8 @@
 	package ar.edu.itba.protos.transport.handler;
 
 	import java.io.IOException;
+	import java.nio.channels.CancelledKeyException;
+	import java.nio.channels.ClosedChannelException;
 	import java.nio.channels.SelectionKey;
 	import java.nio.channels.ServerSocketChannel;
 	import java.nio.channels.SocketChannel;
@@ -17,6 +19,7 @@
 	import ar.edu.itba.protos.transport.support.Attachment;
 	import ar.edu.itba.protos.transport.support.AttachmentFactory;
 	import ar.edu.itba.protos.transport.support.Message;
+	import ar.edu.itba.protos.transport.support.Server;
 	import ar.edu.itba.protos.transport.support.Synchronizer;
 
 		/**
@@ -63,87 +66,62 @@
 
 			logger.debug("Accept ({})", key);
 
+			// La clave del nuevo cliente:
+			SelectionKey downstream = null;
+
 			try {
 
 				// Establecemos la nueva conexión entrante:
-				SocketChannel socket = getServer(key).accept();
+				SocketChannel socket
+					= ((ServerSocketChannel) key.channel()).accept();
 
 				if (socket != null) {
 
+					// Obtengo la fábrica para este servicio:
+					AttachmentFactory factory
+						= (AttachmentFactory) key.attachment();
+
 					// Fabrico un nuevo 'attachment':
-					Attachment attachment = getFactory(key).create();
+					Attachment attachment = factory.create();
 
 					// Registro el nuevo cliente y sus datos:
-					SelectionKey downstream = socket
+					downstream = socket
 						.configureBlocking(false)
 						.register(key.selector(), 0, attachment);
 
-					// Especifico el flujo que identifica este canal:
-					attachment.setDownstream(downstream);
+					if (attachment != null) {
 
-					// El 'attachment' sabe donde se almacenan sus claves:
-					attachment.setSynchronizer(sync);
+						// Especifico el flujo que identifica este canal:
+						attachment.setDownstream(downstream);
 
-					// Configura los eventos para este canal:
-					setOptions(attachment, downstream);
+						// Setea el repositorio de claves:
+						attachment.setSynchronizer(sync);
+
+						// Configura los eventos iniciales para este canal:
+						Event.enable(
+							downstream,
+							attachment.getInitialOptions());
+					}
 				}
 				else throw new IOException();
 			}
+			catch (ClosedChannelException exception) {
+
+				logger.error(
+					Message.INTERFACE_DOWN.getMessage(),
+					Server.tryToResolveAddress(key));
+			}
+			catch (CancelledKeyException exception) {
+
+				logger.error(
+					Message.CLIENT_UNPLUGGED.getMessage(),
+					Server.tryToResolveAddress(downstream));
+			}
 			catch (IOException exception) {
 
-				logger.error(Message.UNKNOWN.getMessage(), exception);
+				logger.error(
+					Message.UNKNOWN.getMessage(),
+					this.getClass().getSimpleName());
 			}
-		}
-
-		/*
-		** Permite obtener la fábrica almacenada en el canal
-		** asociado al ServerSocket que aceptó la conexión.
-		*/
-
-		private AttachmentFactory getFactory(SelectionKey key) {
-
-			AttachmentFactory factory = (AttachmentFactory) key.attachment();
-			if (factory != null) return factory;
-			else return AttachmentFactory.DEFAULT;
-		}
-
-		/*
-		** Determina los eventos iniciales a los que este canal
-		** debe responder en función del estado por defecto del
-		** 'attachment', el cual es obtenido inmediatamente luego de
-		** crear el mismo a través de una fábrica (AttachmentFactory).
-		*/
-
-		private void setOptions(Attachment attachment, SelectionKey key) {
-
-			/*
-			** En este caso utilizamos los métodos provistos por 'Event'
-			** en lugar de utilziar el 'Synchronizer', debido a que la
-			** clave es nueva, todavía no se encuentra en el repositorio,
-			** y además, el canal creado no tiene relación alguna con el
-			** canal del servidor (ServerSocketChannel).
-			*/
-
-			int options = Event.READ.getOptions();
-			if (attachment != null) {
-
-				attachment.getOutboundBuffer().flip();
-
-				if (attachment.hasOutboundData())
-					options |= Event.WRITE.getOptions();
-
-				attachment.getOutboundBuffer().compact();
-			}
-			Event.enable(key, options);
-		}
-
-		/*
-		** Para la clave del evento recibido, se extrae el
-		** ServerSocketChannel correspondiente.
-		*/
-
-		private ServerSocketChannel getServer(SelectionKey key) {
-
-			return (ServerSocketChannel) key.channel();
 		}
 	}

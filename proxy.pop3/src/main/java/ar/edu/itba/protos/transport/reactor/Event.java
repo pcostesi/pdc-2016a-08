@@ -42,16 +42,11 @@
 		** sin modificar el resto de ellos.
 		*/
 
-		public static void enable(SelectionKey key, int options) {
+		public static void enable(SelectionKey key, int options)
+				throws CancelledKeyException {
 
-			if (key != null) {
-
-				try {
-
-					key.interestOps(key.interestOps() | options);
-				}
-				catch (CancelledKeyException spurious) {}
-			}
+			if (key != null)
+				key.interestOps(key.interestOps() | options);
 		}
 
 		/*
@@ -59,11 +54,10 @@
 		** el resto de ellos.
 		*/
 
-		public static void disable(SelectionKey key, int options) {
+		public static void disable(SelectionKey key, int options)
+				throws CancelledKeyException {
 
-			if (key != null) {
-
+			if (key != null)
 				key.interestOps(key.interestOps() & (~options));
-			}
 		}
 	}

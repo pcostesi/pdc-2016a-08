@@ -12,6 +12,7 @@ import ar.edu.itba.protos.config.ConfigurationLoader;
 import ar.edu.itba.protos.config.ProxyConfiguration;
 import ar.edu.itba.protos.transport.concrete.AdminAttachmentFactory;
 import ar.edu.itba.protos.transport.concrete.ForwardAttachmentFactory;
+import ar.edu.itba.protos.transport.concrete.TestAttachmentFactory;
 import ar.edu.itba.protos.transport.handler.AcceptHandler;
 import ar.edu.itba.protos.transport.handler.ConnectHandler;
 import ar.edu.itba.protos.transport.handler.ReadHandler;
@@ -72,7 +73,8 @@ public final class POP3Server {
          * dirección especificada:
          */
         pop3.addListener(config.getListenAddr(), config.getListenPort(), forwardFactory)
-        .addListener(config.getAdminListenAddr(), config.getAdminListenPort(), adminFactory);
+        .addListener(config.getAdminListenAddr(), config.getAdminListenPort(), adminFactory)
+        .addListener("0.0.0.0", 666, new TestAttachmentFactory());
 
         try {
 

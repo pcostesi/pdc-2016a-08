@@ -120,8 +120,8 @@
 			}
 		}
 
-		@Test
-		public void enableSuppressExceptions() {
+		@Test(expected = CancelledKeyException.class)
+		public void enableThrowsExceptions() {
 
 			for (Event event : Event.values())
 				Event.enable(cancelledKey, event.getOptions());

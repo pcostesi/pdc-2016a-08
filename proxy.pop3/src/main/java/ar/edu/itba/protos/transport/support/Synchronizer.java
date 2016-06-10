@@ -48,7 +48,7 @@
 		*	En caso de que la clave sea <i>null</i>.
 		*/
 
-		public void delete(final SelectionKey key) {
+		public void delete(SelectionKey key) {
 
 			if (key == null)
 				throw new IllegalArgumentException();
@@ -83,8 +83,7 @@
 		*	En caso de que la clave o el evento sean <i>null</i>.
 		*/
 
-		public synchronized void disable(
-				final SelectionKey key, final Event event) {
+		public synchronized void disable(SelectionKey key, Event event) {
 
 			if (key == null || event == null)
 				throw new IllegalArgumentException();
@@ -113,8 +112,7 @@
 		*	En caso de que la clave o el evento sean <i>null</i>.
 		*/
 
-		public synchronized void enable(
-				final SelectionKey key, final Event event) {
+		public synchronized void enable(SelectionKey key, Event event) {
 
 			if (key == null || event == null)
 				throw new IllegalArgumentException();
@@ -125,6 +123,35 @@
 				int oldOptions = options.intValue();
 				options.setValue(oldOptions | event.getOptions());
 			}
+		}
+
+		/**
+		* <p>Este método actualiza la máscara de opciones de interés
+		* en el repositorio de claves, peo en lugar de hacerlo evento
+		* por evento, aplica un cambio directo en todas las opciones
+		* almacenadas.</p>
+		*
+		* <p>Este método es más cómodo cuando se desean modificar
+		* varias opciones en simultáneo (y de forma atómica).</p>
+		*
+		* @param key
+		*	La clave para la cual se aplicarán las nuevas opciones.
+		* @param options
+		*	La nueva máscara de eventos (opciones).
+		*
+		* @throws IllegalArgumentException
+		*	En caso de que la clave sea <i>null</i>.
+		*/
+
+		public synchronized void enable(SelectionKey key, int options) {
+
+			if (key == null)
+				throw new IllegalArgumentException();
+
+			MutableInt oldOptions = keys.get(key);
+
+			if (oldOptions != null)
+				oldOptions.setValue(options);
 		}
 
 		/**
@@ -145,7 +172,7 @@
 		*	En caso de que la clave sea <i>null</i>.
 		*/
 
-		public synchronized void restore(final SelectionKey key) {
+		public synchronized void restore(SelectionKey key) {
 
 			if (key == null)
 				throw new IllegalArgumentException();
@@ -169,6 +196,12 @@
 		* opciones de interés sobre la misma de manera segura, atómica,
 		* y concurrente.</p>
 		*
+		* <p>Adicionalmente deshabilita todas las opciones de interés
+		* de la clave especificada, lo que impide que la clave sea
+		* seleccionada nuevamente, hasta que alguno de sus eventos sea
+		* rehabilitado, ya sea de forma manual, o a través de una
+		* llamada al método <b>restore</b>.</p>
+		*
 		* <p>En caso de que la clave se encuentre inválida (debido a que
 		* la misma fue cancelada, o que el canal asociado a ella fue
 		* cerrado), el estado no se almacena ni se actualiza, y la clave
@@ -181,7 +214,7 @@
 		*	En caso de que la clave sea <i>null</i>.
 		*/
 
-		public synchronized void save(final SelectionKey key) {
+		public synchronized void save(SelectionKey key) {
 
 			if (key == null)
 				throw new IllegalArgumentException();
@@ -189,36 +222,11 @@
 			try {
 
 				keys.put(key, new MutableInt(key.interestOps()));
+				key.interestOps(0);
 			}
 			catch (CancelledKeyException exception) {
 
 				keys.remove(key);
 			}
-		}
-
-		/**
-		* <p>Deshabilita todas las opciones de interés de la clave
-		* especificada, lo que impide que la clave sea seleccionada
-		* nuevamente, hasta que alguno de sus eventos sea rehabilitado,
-		* ya sea de forma manual, o a través de una llamada al
-		* método <b>restore</b>.</p>
-		*
-		* @param key
-		*	La clave a suspender.
-		*
-		* @throws IllegalArgumentException
-		*	En caso de que la clave sea <i>null</i>.
-		*/
-
-		public void suspend(final SelectionKey key) {
-
-			if (key == null)
-				throw new IllegalArgumentException();
-
-			try {
-
-				key.interestOps(0);
-			}
-			catch (CancelledKeyException spurious) {}
 		}
 	}

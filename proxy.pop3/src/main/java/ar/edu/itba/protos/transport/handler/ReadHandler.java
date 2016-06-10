@@ -15,7 +15,6 @@
 	import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
-	import ar.edu.itba.protos.transport.support.Message;
 	import ar.edu.itba.protos.transport.support.Synchronizer;
 
 		/**
@@ -48,22 +47,19 @@
 
 		public void onSubmit(SelectionKey key) {
 
-			Attachment attachment = (Attachment) key.attachment();
-			SelectionKey upstream = attachment.getUpstream();
+			SelectionKey upstream
+				= ((Attachment) key.attachment()).getUpstream();
 
-			if (upstream != null) {
-
+			if (key != upstream && upstream != null)
 				sync.save(upstream);
-				sync.suspend(upstream);
-			}
 		}
 
 		public void onResume(SelectionKey key) {
 
-			Attachment attachment = (Attachment) key.attachment();
-			SelectionKey upstream = attachment.getUpstream();
+			SelectionKey upstream
+				= ((Attachment) key.attachment()).getUpstream();
 
-			if (upstream != null)
+			if (key != upstream && upstream != null)
 				sync.restore(upstream);
 		}
 
@@ -112,11 +108,6 @@
 			}
 			catch (IOException exception) {
 
-				logger.error(
-					"Handling message failed with code {}",
-					Message.CLIENT_UNPLUGGED,
-					exception);
-
 				// Elimino la clave del repositorio:
 				sync.delete(key);
 
@@ -141,7 +132,9 @@
 			if (attachment.hasInboundData()) {
 
 				SelectionKey upstream = attachment.getUpstream();
-				sync.enable(upstream, Event.WRITE);
+
+				if (upstream != null)
+					sync.enable(upstream, Event.WRITE);
 			}
 		}
 	}

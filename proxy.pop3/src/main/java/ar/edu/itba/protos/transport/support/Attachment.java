@@ -5,6 +5,7 @@
 	import java.net.InetSocketAddress;
 	import java.net.SocketAddress;
 	import java.nio.ByteBuffer;
+	import java.nio.channels.CancelledKeyException;
 	import java.nio.channels.SelectionKey;
 	import java.nio.channels.SocketChannel;
 	import java.nio.channels.UnresolvedAddressException;
@@ -99,6 +100,19 @@
 		public SelectionKey getUpstream() {
 
 			return upstream;
+		}
+
+		/*
+		** Cuando este 'attachment' es creado y asociado a un canal,
+		** se utiliza este método para determinar el estado inicial
+		** del mismo, es decir, se indican los eventos para los
+		** cuales va a responder. Por defecto se habilita la lectura
+		** para todos los canales nuevos.
+		*/
+
+		public int getInitialOptions() {
+
+			return Event.READ.getOptions();
 		}
 
 		/*
@@ -297,13 +311,18 @@
 				// SIEMPRE!!! devolver la clave...
 				return key;
 			}
-			catch (UnresolvedAddressException | IOException exception) {
+			catch (UnresolvedAddressException exception) {
 
 				logger.error(
-					"Error connecting to addr {} with attachment {}",
-					address,
-					attachment,
-					exception);
+					Message.UNRESOLVED_ADDRESS.getMessage(),
+					address);
+			}
+			catch (CancelledKeyException
+				| IOException exception) {
+
+				logger.error(
+					Message.UNKNOWN.getMessage(),
+					this.getClass().getSimpleName());
 			}
 			return null;
 		}
@@ -335,19 +354,9 @@
 
 		private void close(SelectionKey stream) {
 
-			if (stream != null) {
+			Server.close(stream);
 
-				stream.cancel();
+			if (stream != null)
 				sync.delete(stream);
-				SocketChannel socket = (SocketChannel) stream.channel();
-				try {
-
-					if (socket.isOpen())
-						socket.close();
-				}
-				catch (IOException spurious) {}
-
-				logger.debug("Stream {} closed successfully", stream);
-			}
 		}
 	}

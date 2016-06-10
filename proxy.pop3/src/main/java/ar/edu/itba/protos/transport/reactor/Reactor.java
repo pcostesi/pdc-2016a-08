@@ -1,6 +1,7 @@
 
 	package ar.edu.itba.protos.transport.reactor;
 
+	import java.nio.channels.CancelledKeyException;
 	import java.nio.channels.SelectionKey;
 	import java.util.HashMap;
 	import java.util.HashSet;
@@ -14,6 +15,8 @@
 
 	import com.google.inject.Inject;
 
+	import ar.edu.itba.protos.transport.support.Message;
+	import ar.edu.itba.protos.transport.support.Server;
 	import ar.edu.itba.protos.transport.support.ThreadingCore;
 
 		/**
@@ -88,14 +91,12 @@
 
 		/*
 		** Devuelve 'true' si el evento especificado se
-		** encuentra activo en la clave indicada. Además,
-		** verifica que la clave sea válida.
+		** encuentra activo en la clave indicada.
 		*/
 
 		public static boolean isOn(Event event, SelectionKey key) {
 
-			return key.isValid()
-				&& 0 != (event.getOptions() & key.readyOps());
+			return 0 != (event.getOptions() & key.readyOps());
 		}
 
 		/*
@@ -145,13 +146,24 @@
 
 		public void dispatch(SelectionKey key) {
 
-			for (Event event : Event.values()) {
+			try {
 
-				Set<Handler> set = handlers.get(event);
+				for (Event event : Event.values()) {
 
-				if (set != null && isOn(event, key))
-					for (Handler handler : set)
-						core.submit(handler, key);
+					Set<Handler> set = handlers.get(event);
+
+					if (set != null && isOn(event, key))
+						for (Handler handler : set)
+							core.submit(handler, key);
+				}
+			}
+			catch (CancelledKeyException exception) {
+
+				logger.error(
+					Message.UNEXPECTED_UNPLUG.getMessage(),
+					Server.tryToResolveAddress(key));
+
+				Server.close(key);
 			}
 		}
 
@@ -162,11 +174,6 @@
 		*/
 
 		public Reactor remove(Handler handler, Event event) {
-
-			logger.debug(
-				"Removing handler {} for event {}",
-				handler,
-				event);
 
 			Set<Handler> set = handlers.get(event);
 			if (set != null) set.remove(handler);
@@ -181,8 +188,6 @@
 
 		public Reactor remove(Handler handler) {
 
-			logger.debug("Removing handler {}", handler);
-
 			for (Event event : Event.values())
 				remove(handler, event);
 
@@ -196,8 +201,6 @@
 		*/
 
 		public void unplug() {
-
-			logger.debug("Unplugging all events from Reactor {}", this);
 
 			for (Event event : Event.values()) {
 

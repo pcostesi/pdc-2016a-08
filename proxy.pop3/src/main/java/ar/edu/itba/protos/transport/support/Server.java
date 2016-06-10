@@ -4,10 +4,11 @@
 	import java.io.IOException;
 	import java.net.InetSocketAddress;
 	import java.nio.channels.CancelledKeyException;
-	import java.nio.channels.Channel;
+	import java.nio.channels.SelectableChannel;
 	import java.nio.channels.SelectionKey;
 	import java.nio.channels.Selector;
 	import java.nio.channels.ServerSocketChannel;
+	import java.nio.channels.SocketChannel;
 	import java.util.ArrayList;
 	import java.util.Iterator;
 	import java.util.List;
@@ -32,7 +33,7 @@
 
 		// TODO: obtener por configuración Pablo!!!
 		/**/private static final long TIMEOUT = 10000;
-		/**/private static final long LAZY_DETECTION_INTERVAL = 1000;
+		/**/private static final long LAZY_INTERVAL_DETECTION = 1000;
 
 		// Logger:
 		private static final Logger logger
@@ -50,6 +51,9 @@
 		// Generador de eventos:
 		private Selector selector;
 
+		// Indica si el monitor de inactividad está activo:
+		private volatile boolean monitoring = true;
+
 		@Inject
 		public Server(Reactor demultiplexor, WatchdogTimer watchdog) {
 
@@ -64,8 +68,7 @@
 			}
 			catch (IOException exception) {
 
-				// TODO: Muy feo esto...
-				exception.printStackTrace();
+				logger.error(Message.CANNOT_RAISE.getMessage());
 			}
 		}
 
@@ -93,7 +96,7 @@
 				InetSocketAddress address,
 				AttachmentFactory factory) throws IOException {
 
-			logger.debug("Attaching listen socket {} to {}", address, factory);
+			logger.debug("Attaching listen socket {} with {}", address, factory);
 
 			ServerSocketChannel channel = ServerSocketChannel.open();
 			channel.configureBlocking(false);
@@ -112,8 +115,7 @@
 		*/
 
 		public Server addListener(
-				String IP,
-				int port,
+				String IP, int port,
 				AttachmentFactory factory) throws IOException {
 
 			InetSocketAddress address = new InetSocketAddress(IP, port);
@@ -128,12 +130,12 @@
 
 		public void dispatch() throws IOException {
 
+			// Levanto el monitor de inactividad:
+			runWatchdog();
+
 			while (true) {
 
-				// Cierro todos los canales inactivos:
-				watchdog.killLazyActivities();
-
-				if (0 < selector.select(LAZY_DETECTION_INTERVAL)) {
+				if (0 < selector.selectNow()) {
 
 					Set<SelectionKey> keys = selector.selectedKeys();
 					Iterator<SelectionKey> iterator = keys.iterator();
@@ -144,17 +146,13 @@
 						SelectionKey key = iterator.next();
 
 						// Si no es un 'listener', actualizo el watchdog:
-						if (!isListener(key)) {
-
-							watchdog.removeActivity(key);
-							watchdog.addActivity(key);
-						}
-
-						// Habría que sacar esto, eventualmente...
-						logger.trace("Select ({})", key);
+						if (!isListener(key))
+							watchdog.update(key);
 
 						// Solicito que un manejador resuelva el evento:
 						demultiplexor.dispatch(key);
+
+						// Quito la clave despachada:
 						iterator.remove();
 					}
 				}
@@ -175,21 +173,16 @@
 
 			// Cierra el monitoreo de actividades:
 			watchdog.removeAll();
+			monitoring = false;
 
 			// Cierra los canales:
-			for (SelectionKey key : keys) {
-
-				key.cancel();
-				Channel channel = key.channel();
-				if (channel.isOpen()) channel.close();
-			}
+			for (SelectionKey key : keys)
+				close(key);
 
 			// Cierra los 'listeners':
-			for (ServerSocketChannel listener : listeners) {
+			for (ServerSocketChannel listener : listeners)
+				close(listener.keyFor(selector));
 
-				// En teoría, no es necesario:
-				if (listener.isOpen()) listener.close();
-			}
 			listeners.clear();
 
 			// Cierra el selector:
@@ -211,7 +204,85 @@
 			}
 			catch (CancelledKeyException exception) {
 
+				logger.error(
+					Message.UNEXPECTED_UNPLUG.getMessage(),
+					tryToResolveAddress(key));
+
+				close(key);
 				return false;
 			}
+		}
+
+		/*
+		** Método público para cerrar canales de forma
+		** segura. Todas las excepciones son suprimidas, por
+		** lo que se deben tomar recaudos necesarios para
+		** determinar el origen de las posibles fallas.
+		*/
+
+		public static void close(SelectionKey key) {
+
+			if (key != null) {
+
+				key.cancel();
+				SelectableChannel channel = key.channel();
+				try {
+
+					if (channel.isOpen())
+						channel.close();
+				}
+				catch (IOException spurious) {}
+			}
+		}
+
+		/*
+		** Intenta determinar la dirección IP y puerto al
+		** cual este canal se encuentra asociado. Si no
+		** puede resolver la dirección, genera un mensaje
+		** especial.
+		*/
+
+		public static String tryToResolveAddress(SelectionKey key) {
+
+			try {
+
+				SelectableChannel channel = key.channel();
+				if (channel instanceof SocketChannel)
+					return ((SocketChannel) channel)
+						.getRemoteAddress().toString();
+				else
+					return ((ServerSocketChannel) channel)
+						.getLocalAddress().toString();
+			}
+			catch (IOException
+				| NullPointerException spurious) {}
+			return Message.UNKNOWN_ADDRESS.getMessage();
+		}
+
+		/*
+		** Separa el monitor de inactividad en un thread
+		** secundario, lo que reduce la latencia en el bucle
+		** principal de selección.
+		*/
+
+		private void runWatchdog() {
+
+			new Thread(new Runnable() {
+
+				@Override
+				public void run() {
+
+					while (monitoring) {
+
+						// Cierra canales inactivos:
+						watchdog.killLazyActivities();
+						try {
+
+							Thread.sleep(LAZY_INTERVAL_DETECTION);
+						}
+						catch (InterruptedException spurious) {}
+					}
+				}
+			}).start();
 		}
 	}

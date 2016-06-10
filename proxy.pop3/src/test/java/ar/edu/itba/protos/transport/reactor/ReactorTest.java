@@ -5,6 +5,7 @@
 	import static org.junit.Assume.*;
 	import static org.mockito.Mockito.*;
 
+	import java.nio.channels.CancelledKeyException;
 	import java.nio.channels.SelectionKey;
 
 	import org.junit.AfterClass;
@@ -160,11 +161,20 @@
 						++eventsOn;
 				assertEquals(1, eventsOn);
 			}
+		}
 
-			doReturn(false).when(key).isValid();
-			when(key.readyOps()).thenReturn(-1);
+		@Test(expected = CancelledKeyException.class)
+		public void isOnThrowsExceptions() {
+
+			SelectionKey cancelledKey
+				= Mockito.mock(SelectionKey.class);
+			when(cancelledKey.readyOps())
+				.thenThrow(CancelledKeyException.class);
+			when(cancelledKey.isValid())
+				.thenReturn(false);
+
 			for (Event event : Event.values())
-				assertFalse(Reactor.isOn(event, key));
+				Reactor.isOn(event, cancelledKey);
 		}
 
 		@Test

@@ -17,61 +17,87 @@
 			("+OK POP-3 Proxy Server (ready).\r\n"),
 
 		/*
+		** Mensajes informativos (no son errores):
+		*/
+
+		TIMEOUT_TRIGGER
+			("El umbral de inactividad fue actualizado a {} segundos."),
+		KILL_BY_LAZY
+			("Se detectó inactividad en {}. El canal fue cerrado."),
+
+		/*
 		** Errores internos generales:
 		*/
 
 		CANNOT_TERMINATE
-			("No se cancelaron todas las tareas pendientes"),
+			("No se cancelaron todas las tareas pendientes."),
 		SHUTDOWN_INTERRUPTED
-			("El sistema fue interrumpido durante el cierre"),
+			("El sistema fue interrumpido durante el cierre."),
+		UNEXPECTED_UNPLUG
+			("Un canal se desconectó abruptamente ({})."),
+		UNKNOWN_ADDRESS
+			("dirección desconocida"),
 
 		/*
 		** Errores asociados a la exposición de un servidor:
 		*/
 
 		CANNOT_RAISE
-			("No se pudo iniciar el servidor"),
+			("Error interno. No se pudo levantar el servidor."),
 		CANNOT_BIND
-			("La dirección especificada ya se está usando"),
+			("La dirección especificada ya se está usando."),
 		UNRESOLVED_ADDRESS
-			("La dirección especificada no se pudo resolver"),
+			("La dirección remota no se pudo resolver ({})."),
 		CANNOT_LISTEN
-			("No se pudo agregar el nuevo 'listener'"),
+			("No se pudo agregar el nuevo 'listener'."),
 
 		/*
-		** Errores asociados a la clase 'ReadHandler'
+		** Errores asociados a la clase 'AcceptHandler':
+		*/
+
+		INTERFACE_DOWN
+			("Una de las interfaces del servidor se cerró abruptamente ({})."),
+
+		/*
+		** Errores asociados a la clase 'ReadHandler':
 		*/
 
 		CLIENT_UNPLUGGED
-			("El cliente se desconectó sorpresivamente"),
+			("Un cliente se desconectó abruptamente ({})."),
 
 		/*
-		** Errores asociados a la clase 'WriteHandler'
+		** Errores asociados a la clase 'WriteHandler':
 		*/
 
 		SERVER_UNPLUGGED
-			("El servidor se desconectó sorpresivamente"),
+			("El servidor se desconectó abruptamente ({})."),
 
 		/*
 		** Errores asociados a la clase 'ConnectHandler':
 		*/
 
+		CONNECTION_TIMEOUT
+			("El intento de conexión tardó demasiado, y fue cancelado ({})."),
+		CONNECTION_SUCCEED
+			("Se estableció una nueva conexión remota ({})."),
+		PENDING_CONNECTION
+			("La conexión remota ({}), sigue pendiente."),
 		CLOSED_PORT
-			("El puerto destino (origin-server) parece estar cerrado"),
+			("El puerto destino (origin-server) parece estar cerrado."),
 
 		/*
 		** Errores asociados a la clase 'ClientAttachment':
 		*/
 
 		CANNOT_FORWARD
-			("No se puede conectar con el 'origin-server'"),
+			("No se pudo conectar con el servidor remoto ({})."),
 
 		/*
 		** Error desconocido:
 		*/
 
 		UNKNOWN
-			("Se produjo un error desconocido");
+			("Error desconocido (módulo {}). Contacte un Ingeniero.");
 
 		// El texto que identifica el contenido del mensaje:
 		private final String message;

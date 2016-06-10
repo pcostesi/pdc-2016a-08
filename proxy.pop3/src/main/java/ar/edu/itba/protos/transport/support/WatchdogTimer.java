@@ -1,11 +1,12 @@
 
 	package ar.edu.itba.protos.transport.support;
 
-	import java.io.IOException;
-	import java.nio.channels.Channel;
 	import java.nio.channels.SelectionKey;
 	import java.util.Comparator;
 	import java.util.PriorityQueue;
+
+	import org.slf4j.Logger;
+	import org.slf4j.LoggerFactory;
 
 	import com.google.inject.Inject;
 
@@ -22,6 +23,10 @@
 		*/
 
 	public final class WatchdogTimer {
+
+		// Logger:
+		private static final Logger logger
+			= LoggerFactory.getLogger(WatchdogTimer.class);
 
 		// La constante de inactividad (en milisegundos):
 		private long timeout = Long.MAX_VALUE;
@@ -63,6 +68,10 @@
 				throw new IllegalArgumentException();
 
 			this.timeout = timeout;
+
+			logger.info(
+				Message.TIMEOUT_TRIGGER.getMessage(),
+				timeout/1000.0);
 		}
 
 		/*
@@ -88,7 +97,7 @@
 		** de ellas, cancela su clave asociada.
 		*/
 
-		public void killLazyActivities() {
+		public synchronized void killLazyActivities() {
 
 			long now = System.currentTimeMillis();
 			while (!activities.isEmpty()) {
@@ -128,22 +137,28 @@
 		}
 
 		/*
+		** Actualiza el nivel de inactividad de la
+		** clave especificada.
+		*/
+
+		public synchronized void update(SelectionKey key) {
+
+			removeActivity(key);
+			addActivity(key);
+		}
+
+		/*
 		** Cancela la clave y cierra el canal asociado a la misma.
 		*/
 
 		private void close(SelectionKey key) {
 
-			key.cancel();
+			logger.info(
+				Message.KILL_BY_LAZY.getMessage(),
+				Server.tryToResolveAddress(key));
+
+			Server.close(key);
 			sync.delete(key);
-			Channel channel = key.channel();
-			if (channel.isOpen()) {
-
-				try {channel.close();}
-				catch (IOException spurious) {
-
-					// Suprimir la excepción
-				}
-			}
 		}
 
 		/*

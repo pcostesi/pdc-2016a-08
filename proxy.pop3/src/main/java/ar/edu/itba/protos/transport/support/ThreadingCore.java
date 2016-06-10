@@ -79,11 +79,10 @@
 			}
 		}
 
-		public void submit(final Handler handler, final SelectionKey key) {
+		public void submit(Handler handler, SelectionKey key) {
 
-			// Almacenar la clave y suspender sus canales:
+			// Almacena la clave y suspende sus canales:
 			sync.save(key);
-			sync.suspend(key);
 			handler.onSubmit(key);
 
 			// Despachar una nueva tarea en algún worker:
@@ -91,6 +90,7 @@
 
 				public void run() {
 
+					// Ejecutar manejador y reponer claves:
 					handler.handle(key);
 					handler.onResume(key);
 					sync.restore(key);

@@ -99,8 +99,6 @@ public final class ClientAttachment extends Attachment implements Interceptor {
 
 				// No se pudo resolver el 'origin-server':
 				closeDownstream();
-
-				logger.error(Message.CANNOT_FORWARD.getMessage());
 			}
 
 			// Sólo una vez:
