@@ -2,6 +2,7 @@ package ar.edu.itba.protos;
 
 import com.google.inject.AbstractModule;
 
+import ar.edu.itba.protos.config.ConfigurationLoader;
 import ar.edu.itba.protos.protocol.admin.AdminProtocolParser;
 import ar.edu.itba.protos.protocol.admin.CommandExecutor;
 import ar.edu.itba.protos.transport.handler.AcceptHandler;
@@ -34,6 +35,10 @@ public class DIModule extends AbstractModule {
         bind(ReadHandler.class);
         bind(WriteHandler.class);
         bind(ConnectHandler.class);
+        requestStaticInjection(CommandExecutor.class);
+
+        bind(ConfigurationLoader.class);
+        requestStaticInjection(ConfigurationLoader.class);
     }
 
 }

@@ -19,10 +19,12 @@ public class App {
     private static final int CONFIG_ERR = -1;
     private static final int SERVER_ERR = -2;
     private static final int MAPPING_ERR = -4;
+    private static final ConfigurationLoader configurator = injector.getInstance(ConfigurationLoader.class);
+
 
     private static void initializeProxyConfig() {
         try {
-            ConfigurationLoader.loadProxyConfig("proxy.xml");
+            configurator.loadProxyConfig("proxy.xml");
         } catch (final JAXBException e) {
             logger.error("Invalid config file", e);
             System.exit(CONFIG_ERR);
@@ -31,7 +33,7 @@ public class App {
 
     private static void initializeUserMapping() {
         try {
-            ConfigurationLoader.loadUserMapping("mapping.xml");
+            configurator.loadUserMapping("mapping.xml");
         } catch (final JAXBException e) {
             logger.error("Invalid proxy mapping file", e);
             System.exit(MAPPING_ERR);

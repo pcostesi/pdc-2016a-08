@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import ar.edu.itba.protos.config.ConfigurationLoader;
@@ -15,9 +16,25 @@ public class CommandExecutor {
     public final static String EMPTY_CMD = "Empty command.";
     public final static String NO_SUCH_CMD = "No such command.";
 
-    private static UserMapping mapping = ConfigurationLoader.getUserMapping();
+    protected ConfigurationLoader configurator;
 
-    public static String execute(final String... line) {
+    @Inject
+    public CommandExecutor(final ConfigurationLoader configurator) {
+        this.configurator = configurator;
+
+        commands.put(AdminProtocolToken.MAP_USER, (params) -> {
+            if (params.length != 3) {
+                throw new CommandException("Invalid number of parameters: " + params.length);
+            }
+
+            final UserMapping mapping = configurator.getUserMapping();
+
+            mapping.mapUserToUpstream(params[0], params[1], Integer.parseInt(params[2]));
+            return String.format("%s -> %s:%s", params[0], params[1], params[2]);
+        });
+    }
+
+    public String execute(final String... line) {
         if (line.length == 0) {
             throw new CommandException(EMPTY_CMD);
         }
@@ -34,14 +51,4 @@ public class CommandExecutor {
         return cmdResult;
     }
 
-    static {
-        commands.put(AdminProtocolToken.MAP_USER, (params) -> {
-            if (params.length != 3) {
-                throw new CommandException("Invalid number of parameters: " + params.length);
-            }
-
-            mapping.mapUserToUpstream(params[0], params[1], Integer.parseInt(params[2]));
-            return String.format("%s -> %s:%s", params[0], params[1], params[2]);
-        });
-    }
 }
