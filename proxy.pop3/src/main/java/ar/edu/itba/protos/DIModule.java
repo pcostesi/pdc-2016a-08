@@ -18,13 +18,6 @@ import ar.edu.itba.protos.transport.support.WatchdogTimer;
  */
 public class DIModule extends AbstractModule {
 
-	/**
-	* @see
-	*	<a href = "https://github.com/google/guice/wiki/Scopes">
-	*		Google Guice Scopes
-	*	</a>
-	*/
-
     @Override
     protected void configure() {
         bind(POP3Server.class);

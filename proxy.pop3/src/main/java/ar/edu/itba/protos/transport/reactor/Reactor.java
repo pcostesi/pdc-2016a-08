@@ -48,7 +48,7 @@
 			= LoggerFactory.getLogger(Reactor.class);
 
 		// Mapa de entidades que pueden procesar eventos:
-		private Map<Event, Set<Handler>> handlers = null;
+		private final Map<Event, Set<Handler>> handlers;
 
 		// El núcleo de ejecución:
 		private final ThreadingCore core;
@@ -67,9 +67,14 @@
 				handlers.put(event, new HashSet<>());
 		}
 
-		/*
-		** Devuelve la cantidad de eventos que este
-		** reactor puede despachar.
+		/**
+		* <p>Especifica cuántos eventos puede manipular este
+		* reactor. Es de esperarse que pueda manejar todos los
+		* eventos válidos definidos en la clase
+		* <b>SelectionKey</b>.</p>
+		*
+		* @return Devuelve la cantidad de eventos que este
+		*	reactor puede despachar.
 		*/
 
 		public int getEvents() {
@@ -77,9 +82,17 @@
 			return handlers.size();
 		}
 
-		/*
-		** Devuelve la cantidad de manejadores registrados
-		** para un determinado evento.
+		/**
+		* <p>Para cada evento disponible (aquellos que este reactor
+		* soporta), especifica la cantidad de manejadores
+		* subscriptos.</p>
+		*
+		* @param event
+		*	El tipo de evento para el cual se desea determinar la
+		*	cantidad de handlers subscriptos.
+		*
+		* @return Devuelve la cantidad de manejadores registrados
+		*	para un determinado evento.
 		*/
 
 		public int getHandlers(Event event) {
@@ -89,20 +102,39 @@
 			return 0;
 		}
 
-		/*
-		** Devuelve 'true' si el evento especificado se
-		** encuentra activo en la clave indicada.
+		/**
+		* <p>Determina si el evento especificado se encuentra activo
+		* en la clave indicada.</p>
+		*
+		* @param event
+		*	El evento para el cual se desea determinar su presencia.
+		* @param key
+		*	La clave a revisar.
+		*
+		* @return Devuelve <i>true</i> si el evento especificado se
+		* encuentra activo en la clave indicada.
+		*
+		* @throws CancelledKeyException
+		*	Si la clave especificada había sido cancelada previamente.
 		*/
 
-		public static boolean isOn(Event event, SelectionKey key) {
+		public static boolean isOn(Event event, SelectionKey key)
+				throws CancelledKeyException {
 
 			return 0 != (event.getOptions() & key.readyOps());
 		}
 
-		/*
-		** Registra un nuevo manejador, para un evento
-		** determinado. Si el manejador ya estaba anotado,
-		** este método no tiene efecto.
+		/**
+		* <p>Registra un nuevo manejador, para un evento
+		* determinado. Si el manejador ya estaba anotado,
+		* este método no tiene efecto.</p>
+		*
+		* @param handler
+		*	El manejador a registrar en el reactor.
+		* @param event
+		*	El evento para el cual se va a registrar el handler.
+		*
+		* @return Devuelve este mismo reactor.
 		*/
 
 		public Reactor add(Handler handler, Event event) {
@@ -112,11 +144,20 @@
 			return this;
 		}
 
-		/*
-		** Registra un manejador, pero en este caso, para
-		** múltiples eventos. Las opciones especificadas se
-		** corresponden con una máscara, donde cada bit
-		** representa un evento en particular (ver Event).
+		/**
+		* <p>Registra un manejador, pero en este caso, para
+		* múltiples eventos. Las opciones especificadas se
+		* corresponden con una máscara, donde cada bit
+		* representa un evento en particular
+		* (ver <b>Event</b>).</p>
+		*
+		* @param handler
+		*	El manejador a registrar en el reactor.
+		* @param options
+		*	La máscara que especifica todos los eventos para
+		*	los cuales registar el handler.
+		*
+		* @return Devuelve este reactor.
 		*/
 
 		public Reactor add(Handler handler, int options) {
@@ -128,9 +169,10 @@
 			return this;
 		}
 
-		/*
-		** Bloquea la ejecución de nuevas tareas por completo, lo
-		** que significa que el reactor queda inutilizable.
+		/**
+		* <p>Bloquea la ejecución de nuevas tareas por completo, lo
+		* que significa que el reactor queda inutilizable. Para ello,
+		* apaga el núcleo de procesamiento (pool de threads).</p>
 		*/
 
 		public void block() {
@@ -138,10 +180,14 @@
 			core.shutdown();
 		}
 
-		/*
-		** Para un determinado evento (el cual se representa
-		** mediante una clave), ejecuta todos los manejadores
-		** registrados para ese evento.
+		/**
+		* <p>Para un determinado evento (el cual se representa
+		* mediante una clave), ejecuta todos los manejadores
+		* registrados para ese evento.</p>
+		*
+		* @param key
+		*	La clave seleccionada a despachar en sus respectivos
+		*	manejadores subscriptos.
 		*/
 
 		public void dispatch(SelectionKey key) {
@@ -167,10 +213,18 @@
 			}
 		}
 
-		/*
-		** Cancelar la subscripción de un manejador sobre
-		** cierto evento. El manejador ya no recibirá eventos
-		** de este tipo.
+		/**
+		* <p>Cancelar la subscripción de un manejador sobre
+		* cierto evento. El manejador ya no recibirá eventos
+		* de este tipo.</p>
+		*
+		* @param handler
+		*	El handler a remover.
+		* @param event
+		*	El evento para el cual el handler ya no se encargará
+		*	de manejar.
+		*
+		* @return Devuelve este mismo reactor.
 		*/
 
 		public Reactor remove(Handler handler, Event event) {
@@ -180,10 +234,16 @@
 			return this;
 		}
 
-		/*
-		** Cancela la subscripción de un manejador de todos
-		** los eventos en los que esté registrado. El manejador
-		** ya no recibirá eventos de ningún tipo.
+		/**
+		* <p>Cancela la subscripción de un manejador de todos
+		* los eventos en los que esté registrado. El manejador
+		* ya no recibirá eventos de ningún tipo.</p>
+		*
+		* @param handler
+		*	El manejador que será desubscripto de todos los eventos
+		*	que soporta este reactor.
+		*
+		* @return Devuelve este mismo reactor.
 		*/
 
 		public Reactor remove(Handler handler) {
@@ -194,10 +254,14 @@
 			return this;
 		}
 
-		/*
-		** Este método permite desubscribir todos los 'handlers',
-		** lo que permite desconectar todos los componentes que,
-		** gracias al reactor, se encontraban relacionados.
+		/**
+		* <p>Este método permite desubscribir todos los <i>handlers</i>,
+		* lo que permite desconectar todos los componentes que,
+		* gracias al reactor, se encontraban relacionados. Luego de
+		* ejecutar este método, las claves recibidas no serán
+		* despachadas hacia ningún handler, aunque como el núcleo de
+		* procesamiento sigue activo (pool de threads), es posible
+		* registrar nuevos (o incluso los mismos) manejadores.</p>
 		*/
 
 		public void unplug() {

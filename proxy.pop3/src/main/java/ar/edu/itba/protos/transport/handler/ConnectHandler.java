@@ -20,11 +20,13 @@
 	import ar.edu.itba.protos.transport.support.Synchronizer;
 
 		/**
-		* <p>Se encarga de establecer una conexión con el 'origin-server',
-		* por la cual el circuito cliente-servidor quedará establecido.
-		* Para determinar el 'origin-server' es necesario pre-procesar una
-		* cantidad mínima del flujo de bytes desde el cliente, para poder
-		* determinar hacia donde demultiplexar la conexión.</p>
+		* <p>Se encarga de establecer una conexión con el
+		* <b>origin-server</b>, por la cual el circuito
+		* cliente-servidor quedará establecido. Para determinar
+		* el <i>origin-server</i>, es necesario pre-procesar una
+		* cantidad mínima del flujo de bytes desde el cliente,
+		* para poder determinar hacia donde demultiplexar la
+		* conexión.</p>
 		*
 		* <p>Esta clase es <b>thread-safe</b>.</p>
 		*/
@@ -45,6 +47,16 @@
 			this.sync = sync;
 		}
 
+		/**
+		* <p>En caso de que la clave posea un forwarder,
+		* almacena el estado del mismo en el repositorio de
+		* claves, siempre y cuando el downstream y el upstream
+		* no representen el mismo canal.</p>
+		*
+		* @param key
+		*	La clave a procesar.
+		*/
+
 		public void onSubmit(SelectionKey key) {
 
 			SelectionKey upstream
@@ -53,6 +65,15 @@
 			if (key != upstream && upstream != null)
 				sync.save(upstream);
 		}
+
+		/**
+		* <p>Recupera el estado del canal de forwarding, en caso
+		* de que exista uno. El canal downstream es recuperado
+		* automáticamente por el núcleo de procesamiento.</p>
+		*
+		* @param key
+		*	La clave a procesar.
+		*/
 
 		public void onResume(SelectionKey key) {
 
@@ -63,9 +84,14 @@
 				sync.restore(upstream);
 		}
 
-		/*
-		** Procesa el evento para el cual está subscripto. En este
-		** caso, el evento es de conexión saliente establecida.
+		/**
+		* <p>Establece por completo la conexión remota con el
+		* servidor origen, y prepara el canal para los eventos
+		* iniciales, lo que la deja preparada para operar.</p>
+		*
+		* @param key
+		*	La clave a procesar, en la cual se activó el
+		*	evento <b>CONNECT</b>.
 		*/
 
 		public void handle(SelectionKey key) {

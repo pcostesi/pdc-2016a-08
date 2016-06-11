@@ -4,9 +4,10 @@
 	import java.nio.channels.SelectionKey;
 
 		/**
-		* Representa un manejador de eventos. Para cada
+		* <p>Representa un manejador de eventos. Para cada
 		* evento manejable, el <b>handler</b> debería subscribirse
-		* en el reactor de interés, e implementar estos métodos.
+		* en el reactor de interés, e implementar estos métodos de
+		* acuerdo a su especificación.</p>
 		*/
 
 	public interface Handler {
@@ -38,7 +39,8 @@
 		* <p>Se garantiza que la ejecución de este método en
 		* los handlers subscriptos en un reactor se ejecutan de
 		* manera secuencial en el <i>master thread</i>, y por lo
-		* tanto, este método es <b>thread-safe</b>.</p>
+		* tanto, este método se ejecuta en un entorno
+		* <b>thread-safe</b>.</p>
 		*
 		* @param key
 		*	La clave asociada al evento para el cual este handler

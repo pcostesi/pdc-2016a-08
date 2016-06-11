@@ -45,6 +45,16 @@
 			this.sync = sync;
 		}
 
+		/**
+		* <p>En caso de que la clave posea un forwarder,
+		* almacena el estado del mismo en el repositorio de
+		* claves, siempre y cuando el downstream y el upstream
+		* no representen el mismo canal.</p>
+		*
+		* @param key
+		*	La clave a procesar.
+		*/
+
 		public void onSubmit(SelectionKey key) {
 
 			SelectionKey upstream
@@ -53,6 +63,15 @@
 			if (key != upstream && upstream != null)
 				sync.save(upstream);
 		}
+
+		/**
+		* <p>Recupera el estado del canal de forwarding, en caso
+		* de que exista uno. El canal downstream es recuperado
+		* automáticamente por el núcleo de procesamiento.</p>
+		*
+		* @param key
+		*	La clave a procesar.
+		*/
 
 		public void onResume(SelectionKey key) {
 
@@ -63,9 +82,16 @@
 				sync.restore(upstream);
 		}
 
-		/*
-		** Procesa el evento para el cual está subscripto. En este
-		** caso, el evento es de lectura del flujo de bytes.
+		/**
+		* <p>Se encarga de consumir el flujo de entrada para la
+		* clave especificada, procesando el msimo a través del
+		* interceptor obtenido del <i>attachment</i>. Adicionalmente
+		* verifica y modifica los eventos para los cuales responde
+		* este canal en función del estado de los buffers internos.</p>
+		*
+		* @param key
+		*	La clave a procesar, en la cual se activó el
+		*	evento <b>READ</b>.
 		*/
 
 		public void handle(SelectionKey key) {
@@ -121,10 +147,14 @@
 			}
 		}
 
-		/*
-		** En caso de que el 'attachment' posea información
-		** disponible para enviar (en el buffer 'inbound'),
-		** habilita el canal de escritura en el 'upstream'.
+		/**
+		* <p>En caso de que el <i>attachment</i> posea información
+		* disponible para enviar (en el buffer <i>inbound</i>),
+		* habilita el canal de escritura en el <i>upstream</i>.</p>
+		*
+		* @param attachment
+		*	El <i>attachment</i> asociado a la clave procesada, el cual
+		*	determina el estado de los buffers internos.
 		*/
 
 		private void detectInbound(Attachment attachment) {

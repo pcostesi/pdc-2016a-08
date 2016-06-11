@@ -18,7 +18,7 @@
 	import ar.edu.itba.protos.transport.support.Synchronizer;
 
 		/**
-		* <p>Este 'handler' es el encargado de forwardear la información
+		* <p>Este <i>handler</i> es el encargado de forwardear la información
 		* a través de los circuitos establecidos. En primer lugar,
 		* recibe la información del cliente, y la envía hacia el servidor
 		* origen. En segundo lugar, envía las respuestas de este último
@@ -44,6 +44,16 @@
 			this.sync = sync;
 		}
 
+		/**
+		* <p>En caso de que la clave posea un forwarder,
+		* almacena el estado del mismo en el repositorio de
+		* claves, siempre y cuando el downstream y el upstream
+		* no representen el mismo canal.</p>
+		*
+		* @param key
+		*	La clave a procesar.
+		*/
+
 		public void onSubmit(SelectionKey key) {
 
 			SelectionKey upstream
@@ -52,6 +62,15 @@
 			if (key != upstream && upstream != null)
 				sync.save(upstream);
 		}
+
+		/**
+		* <p>Recupera el estado del canal de forwarding, en caso
+		* de que exista uno. El canal downstream es recuperado
+		* automáticamente por el núcleo de procesamiento.</p>
+		*
+		* @param key
+		*	La clave a procesar.
+		*/
 
 		public void onResume(SelectionKey key) {
 
@@ -62,9 +81,16 @@
 				sync.restore(upstream);
 		}
 
-		/*
-		** Procesa el evento para el cual está subscripto. En este
-		** caso, el evento es de escritura del flujo de bytes.
+		/**
+		* <p>Su función es enviar los datos (escribir) por el canal
+		* especificado. Debido a que la información se procesa durante
+		* una lectura, este método no realiza ninguna verificación
+		* sobre el flujo de bytes saliente. Adicionalmente, actualiza
+		* el estado de las claves que utiliza en el repositorio global.</p>
+		*
+		* @param key
+		*	La clave a procesar, en la cual se activó el
+		*	evento <b>WRITE</b>.
 		*/
 
 		public void handle(SelectionKey key) {
@@ -112,10 +138,14 @@
 			}
 		}
 
-		/*
-		** En caso de que el 'attachment' posea información disponible
-		** para enviar (en el buffer 'inbound'), habilita el canal de
-		** escritura en el 'upstream'.
+		/**
+		* <p>En caso de que el <i>attachment</i> posea información
+		* disponible para enviar (en el buffer <i>inbound</i>),
+		* habilita el canal de escritura en el <i>upstream</i>.</p>
+		*
+		* @param attachment
+		*	El <i>attachment</i> asociado a la clave procesada, el cual
+		*	determina el estado de los buffers internos.
 		*/
 
 		private void detectInbound(Attachment attachment) {

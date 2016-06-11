@@ -22,11 +22,12 @@
 	import ar.edu.itba.protos.transport.reactor.Reactor;
 
 		/**
-		* Un servidor recibe conexiones entrantes en las
+		* <p>Un servidor recibe conexiones entrantes en las
 		* direcciones y puertos especificados, y genera
 		* eventos de forma no-bloqueante, los cuales son
 		* despachados hacia un demultiplexor (implementado
-		* mediante un reactor).
+		* mediante un reactor). En cada interfaz especificada
+		* se asocia una fábrica de <i>attachments</i>.</p>
 		*/
 
 	public final class Server {
@@ -72,10 +73,14 @@
 			}
 		}
 
-		/*
-		** Devuelve la cantidad de 'listeners' activos en este servidor.
-		** Cada 'listener' se corresponde con una dirección IP y un puerto
-		** de escucha en la que se reciben conexiones entrantes.
+		/**
+		* <p>Devuelve la cantidad de <b>listeners</b> activos en este
+		* servidor. Cada <i>listener</i> se corresponde con una dirección
+		* IP y un puerto de escucha en la que se reciben conexiones
+		* entrantes.</p>
+		*
+		* @return La cantidad de interfaces abiertas en las que este
+		* 	servidor está escuchando.
 		*/
 
 		public int getListeners() {
@@ -83,12 +88,19 @@
 			return listeners.size();
 		}
 
-		/*
-		** Agrega una nueva dirección y puerto de escucha para este
-		** servidor. Es importante notar que el nuevo canal de escucha
-		** puede o no poseer un 'attachment'. En caso de que no posea,
-		** debe utilizarse algún mecanismo adicional para diferenciar
-		** en cual de las direcciones se recibió una petición de conexión.
+		/**
+		* <p>Agrega una nueva dirección y puerto de escucha para este
+		* servidor. Es importante notar que el nuevo canal de escucha
+		* puede o no poseer un <i>attachment</i>. En caso de que no posea,
+		* debe utilizarse algún mecanismo adicional para diferenciar
+		* en cuál de las direcciones se recibió una petición de conexión.</p>
+		*
+		* @param address
+		*	La dirección en la cual escuchar conexiones entrantes.
+		* @param factory
+		*	La fábrica de <i>attachments</i>.
+		*
+		* @return El servidor sobre el cual se instalaron las interfaces.
 		*/
 
 		public Server addListener(
@@ -118,15 +130,23 @@
 			return this;
 		}
 
-		/*
-		** En este caso se agrega una nueva dirección de escucha,
-		** especificando directamente la IP y el puerto en cuestión.
-		** Devuelve 'true' si pudo agregar el canal.
+		/**
+		* En este caso se agrega una nueva dirección de escucha,
+		* especificando directamente la IP y el puerto en cuestión.
+		*
+		* @param IP
+		*	Dirección IP sobre la cual se recibirán conexiones entrantes.
+		* @param port
+		*	Puerto sobre el cual escuchar.
+		* @param factory
+		*	La fábrica de <i>attachments</i>.
+		*
+		* @return El servidor sobre el cual se instalaron las interfaces.
 		*/
 
 		public Server addListener(
 				String IP, int port,
-				AttachmentFactory factory) throws IOException {
+				AttachmentFactory factory) {
 
 			try {
 
@@ -142,10 +162,13 @@
 			return this;
 		}
 
-		/*
-		** Comienza a despachar eventos. Para ello, comienza por
-		** seleccionar los canales que deben ser procesados, y luego
-		** solicita que un manejador adecuado procese dicho evento.
+		/**
+		* <p>Comienza a despachar eventos. Para ello, comienza por
+		* seleccionar los canales que deben ser procesados, y luego
+		* solicita que un manejador adecuado procese dicho evento.</p>
+		*
+		* @throws IOException
+		*	Si ocurre algún error de I/O inesperado.
 		*/
 
 		public void dispatch() throws IOException {
@@ -181,12 +204,15 @@
 			}
 		}
 
-		/*
-		** Implementa un 'graceful-shutdown' para todas las
-		** direcciones de escucha y para todos los clientes
-		** conectados. Luego de ejecutar este método, se puede
-		** levantar devuelta el servidor, especificando nuevos
-		** 'listeners' y despachando sus eventos.
+		/**
+		* <p>Implementa un <b>graceful-shutdown</b> para todas las
+		* direcciones de escucha y para todos los clientes
+		* conectados. Luego de ejecutar este método, se puede
+		* levantar devuelta el servidor, especificando nuevos
+		* <i>listeners</i> y despachando sus eventos.</p>
+		*
+		* @throws IOException
+		*	Si ocurre algún error de I/O inesperado.
 		*/
 
 		public void shutdown() throws IOException {
@@ -212,6 +238,15 @@
 			// Cierra el selector:
 			if (selector.isOpen()) selector.close();
 		}
+
+		/**
+		* <p>Genera una cadena que representa el estado del servidor,
+		* en la cual se especifican todas las interfaces en las
+		* que se están escuchando conexiones entrantes. Si no puede
+		* determinar las interfaces, devuelve una cadena especial.</p>
+		*
+		* @return Una cadena que representa el estado del servidor.
+		*/
 
 		@Override
 		public String toString() {
@@ -242,11 +277,14 @@
 			}
 		}
 
-		/*
-		** Método público para cerrar canales de forma
-		** segura. Todas las excepciones son suprimidas, por
-		** lo que se deben tomar recaudos necesarios para
-		** determinar el origen de las posibles fallas.
+		/**
+		* <p>Método público para cerrar canales de forma
+		* segura. Todas las excepciones son suprimidas, por
+		* lo que se deben tomar recaudos necesarios para
+		* determinar el origen de las posibles fallas.</p>
+		*
+		* @param key
+		*	La clave a cancelar, cuyo canal asociado se cerrará.
 		*/
 
 		public static void close(SelectionKey key) {
@@ -264,11 +302,18 @@
 			}
 		}
 
-		/*
-		** Intenta determinar la dirección IP y puerto al
-		** cual este canal se encuentra asociado. Si no
-		** puede resolver la dirección, genera un mensaje
-		** especial.
+		/**
+		* <p>Intenta determinar la dirección IP y puerto al
+		* cual este canal se encuentra asociado. Si no
+		* puede resolver la dirección, genera un mensaje
+		* especial.</p>
+		*
+		* @param key
+		*	La clave para la cual se intentará resolver su dirección.
+		*
+		* @return Una cadena que representa la dirección asociada a
+		*	esta clave, o un mensaje especial indicando que la misma
+		*	no se pudo resolver (porque el canal estaba cerrado).
 		*/
 
 		public static String tryToResolveAddress(SelectionKey key) {
@@ -288,11 +333,17 @@
 			return Message.UNKNOWN_ADDRESS.getMessage();
 		}
 
-		/*
-		** Devuelve 'true' si la clave está activa para el
-		** evento ACCEPT, es decir, que el canal se encuentra
-		** a disposición de conexiones entrantes, tal cual lo
-		** hace un 'ServerSocketChannel' (listener).
+		/**
+		* <p>Indica si el canal de la clave está activa para el
+		* evento <b>ACCEPT</b>, es decir, que el canal se encuentra
+		* a disposición de conexiones entrantes, tal cual lo
+		* hace un <i>ServerSocketChannel</i> (listener).</p>
+		*
+		* @param key
+		*	La clave para la cual se determinará su funcionalidad.
+		*
+		* @return Devuelve <i>true</i> si la clave representa un
+		*	socket de escucha (<i>ServerSocketChannel</i>).
 		*/
 
 		private boolean isListener(SelectionKey key) {
@@ -312,10 +363,10 @@
 			}
 		}
 
-		/*
-		** Separa el monitor de inactividad en un thread
-		** secundario, lo que reduce la latencia en el bucle
-		** principal de selección.
+		/**
+		* <p>Separa el monitor de inactividad en un thread
+		* secundario, lo que reduce la latencia en el bucle
+		* principal de selección.</p>
 		*/
 
 		private void runWatchdog() {

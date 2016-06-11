@@ -26,7 +26,7 @@
 	public final class Synchronizer {
 
 		// El repositorio global de claves:
-		private ConcurrentMap<SelectionKey, MutableInt> keys = null;
+		private final ConcurrentMap<SelectionKey, MutableInt> keys;
 
 		@Inject
 		private Synchronizer() {

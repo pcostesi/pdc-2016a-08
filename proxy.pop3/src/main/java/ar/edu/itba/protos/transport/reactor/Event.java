@@ -5,11 +5,11 @@
 	import java.nio.channels.SelectionKey;
 
 		/**
-		* Representa el conjunto de eventos posibles, que un
+		* <p>Representa el conjunto de eventos posibles, que un
 		* reactor debe demultiplexar. Debido a que la clase
-		* 'SelectionKey' declara los eventos utilizando constantes
-		* individuales, es necesario construir este 'Enum' para
-		* recorrerlos de forma sistemática.
+		* <b>SelectionKey</b> declara los eventos utilizando constantes
+		* individuales, es necesario construir este <i>Enum</i> para
+		* recorrerlos de forma sistemática.</p>
 		*/
 
 	public enum Event {
@@ -27,9 +27,12 @@
 			this.options = options;
 		}
 
-		/*
-		** Devuelve la máscara asociada a cada evento,
-		** la cual se obtiene de la clase SelectionKey.
+		/**
+		* <p>Permite obtener la máscar subyacente definida por
+		* la clase <b>SelectionKey</b>.</p>
+		*
+		* @return Devuelve la máscara asociada a cada evento,
+		*	la cual se obtiene de la clase SelectionKey.
 		*/
 
 		public int getOptions() {
@@ -37,9 +40,17 @@
 			return options;
 		}
 
-		/*
-		** Habilita nuevos eventos en la clave especificada
-		** sin modificar el resto de ellos.
+		/**
+		* <p>Habilita nuevos eventos en la clave especificada
+		* sin modificar el resto de ellos.</p>
+		*
+		* @param key
+		*	La clave en la cual se van a habilitar los eventos.
+		* @param options
+		*	La máscara de opciones con los eventos a habilitar.
+		*
+		* @throws CancelledKeyException
+		*	Si la clave especificada había sido cancelada.
 		*/
 
 		public static void enable(SelectionKey key, int options)
@@ -49,9 +60,17 @@
 				key.interestOps(key.interestOps() | options);
 		}
 
-		/*
-		** Deshabilita los eventos especificados, sin alterar
-		** el resto de ellos.
+		/**
+		* <p>Deshabilita los eventos en la clave especificada
+		* sin modificar el resto de ellos.</p>
+		*
+		* @param key
+		*	La clave en la cual se van a deshabilitar los eventos.
+		* @param options
+		*	La máscara de opciones con los eventos a deshabilitar.
+		*
+		* @throws CancelledKeyException
+		*	Si la clave especificada había sido cancelada.
 		*/
 
 		public static void disable(SelectionKey key, int options)

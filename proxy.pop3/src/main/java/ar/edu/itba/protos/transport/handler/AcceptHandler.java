@@ -28,7 +28,7 @@
 		* Estos suceden cuando un cliente establece conexión
 		* en alguna de las direcciones y puertos de escucha de
 		* alguno de los servidores que están utilizando el mismo
-		* reactor al cual este 'handler' está subscripto.</p>
+		* reactor al cual este <i>handler</i> está subscripto.</p>
 		*
 		* <p>Esta clase es <b>thread-safe</b>.</p>
 		*/
@@ -58,15 +58,31 @@
 		/*
 		** No es necesario implementar estas funcionalidades
 		** debido a que 'ThreadingCore' ya se encarga lo
-		** suficiente.
+		** suficiente. Además, la nueva conexión entrante no
+		** requiere sincronización, debido a que este handler
+		** es el único que posee referencia hacia ella, y por
+		** lo tanto, la misma se encuentra a salvo durante la
+		** ejecución de este manejador.
 		*/
 
 		public void onSubmit(SelectionKey key) {}
 		public void onResume(SelectionKey key) {}
 
-		/*
-		** Procesa el evento para el cual está subscripto. En este
-		** caso, el evento es de aceptación.
+		/**
+		* <p>Se encarga de aceptar una nueva conexión entrante,
+		* de registrar el nuevo canal y de instalar su <i>attachment</i>
+		* correspondiente, obtenido gracias a la fábrica asociada a la
+		* clave manipulada. Además, configura el estado inicial del canal
+		* y subscribe la misma al monitor de inactividad.</p>
+		*
+		* <p>El repositorio de claves no se utiliza para modificar el
+		* estado de la clave generada debido a que no es posible que otro
+		* handler acceda a la misma, debido a que esta se crea por primera
+		* vez en este lugar, y nadie más la puede referenciar.</p>
+		*
+		* @param key
+		*	La clave a procesar, en la cual se activó el
+		*	evento <b>ACCEPT</b>.
 		*/
 
 		public void handle(SelectionKey key) {

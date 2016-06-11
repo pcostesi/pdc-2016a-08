@@ -14,11 +14,11 @@
 	import ar.edu.itba.protos.transport.support.Server;
 
 		/**
-		* Esta fábrica se utiliza para realizar testeos
+		* <p>Esta fábrica se utiliza para realizar testeos
 		* sobre la capa de transporte. Permite monitorear
 		* el flujo de bytes consumidos y despachados, asi
 		* como también obtener ciertas métricas sobre los
-		* mismos.
+		* mismos.</p>
 		*/
 
 	public final class TestAttachmentFactory implements AttachmentFactory {
@@ -28,7 +28,7 @@
 			= LoggerFactory.getLogger(TestAttachmentFactory.class);
 
 		// Tamaño del buffer de testeo:
-		private static final int BUFFER_SIZE = 4096;
+		private static final int BUFFER_SIZE = 8192;
 
 		// Mensaje generado durante una desconexión:
 		private static final String greetingBanner

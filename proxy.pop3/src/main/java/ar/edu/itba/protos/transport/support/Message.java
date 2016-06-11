@@ -2,9 +2,9 @@
 	package ar.edu.itba.protos.transport.support;
 
 		/**
-		* Se definen todos los mensajes que el servidor puede
+		* <p>Se definen todos los mensajes que el servidor puede
 		* emitir durante su ejecución, o durante la presencia de
-		* un estado de error.
+		* un estado de error.</p>
 		*/
 
 	public enum Message {
@@ -34,9 +34,9 @@
 		*/
 
 		CANNOT_TERMINATE
-			("No se cancelaron todas las tareas pendientes."),
+			("No se pudo cancelar todas las tareas pendientes en el núcleo."),
 		SHUTDOWN_INTERRUPTED
-			("El sistema fue interrumpido durante el cierre."),
+			("El sistema de subprocesos fue interrumpido durante el cierre."),
 		UNEXPECTED_UNPLUG
 			("Un canal se desconectó abruptamente ({})."),
 		UNKNOWN_ADDRESS
@@ -88,8 +88,6 @@
 			("Se estableció una nueva conexión remota ({})."),
 		PENDING_CONNECTION
 			("La conexión remota ({}), sigue pendiente."),
-		CLOSED_PORT
-			("El puerto destino (origin-server) parece estar cerrado."),
 
 		/*
 		** Errores asociados a la clase 'ClientAttachment':
@@ -117,10 +115,23 @@
 		** Getter's
 		*/
 
+		/**
+		* <p>Devuelve la cadena asociada a este mensaje.</p>
+		*
+		* @return El mensaje asociado, como <i>String</i>.
+		*/
+
 		public String getMessage() {
 
 			return message;
 		}
+
+		/**
+		* <p>Este método solo se incluye por completitud, pero
+		* se comporta de forma equivalente a <i>getMessage()</i>.</p>
+		*
+		* @return La cadena asociada a este mensaje.
+		*/
 
 		@Override
 		public String toString() {
