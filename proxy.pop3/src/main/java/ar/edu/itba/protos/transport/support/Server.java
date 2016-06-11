@@ -33,7 +33,7 @@
 	public final class Server {
 
 		// TODO: obtener por configuración Pablo!!!
-		/**/private static final long TIMEOUT = 5000;
+		/**/private static final long TIMEOUT = 15000;
 		/**/private static final long LAZY_INTERVAL_DETECTION = 1000;
 
 		// Logger:

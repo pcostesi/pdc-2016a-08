@@ -94,11 +94,19 @@
 
 			try {
 
+				// La interfaz activada en el servidor:
+				ServerSocketChannel server =
+					(ServerSocketChannel) key.channel();
+
 				// Establecemos la nueva conexión entrante:
-				SocketChannel socket
-					= ((ServerSocketChannel) key.channel()).accept();
+				SocketChannel socket = server.accept();
 
 				if (socket != null) {
+
+					logger.info(
+						Message.INCOMING_CONNECTION.getMessage(),
+						socket.getRemoteAddress(),
+						server.getLocalAddress());
 
 					// Obtengo la fábrica para este servicio:
 					AttachmentFactory factory

@@ -20,6 +20,8 @@
 		** Mensajes informativos (no son errores):
 		*/
 
+		INCOMING_CONNECTION
+			("Se aceptó una nueva conexión desde {} (sobre la interfaz {})."),
 		SHUTDOWN_COMPLETE
 			("El servidor se desconectó por completo. Adiós!"),
 		SERVER_SHUTDOWN
