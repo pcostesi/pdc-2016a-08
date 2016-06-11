@@ -2,6 +2,8 @@ package ar.edu.itba.protos;
 
 import com.google.inject.AbstractModule;
 
+import ar.edu.itba.protos.protocol.admin.AdminProtocolParser;
+import ar.edu.itba.protos.protocol.admin.CommandExecutor;
 import ar.edu.itba.protos.transport.handler.AcceptHandler;
 import ar.edu.itba.protos.transport.handler.ConnectHandler;
 import ar.edu.itba.protos.transport.handler.ReadHandler;
@@ -22,8 +24,10 @@ public class DIModule extends AbstractModule {
     protected void configure() {
         bind(POP3Server.class);
         bind(Server.class);
-        bind(WatchdogTimer.class);
         bind(Reactor.class);
+        bind(AdminProtocolParser.class);
+        bind(CommandExecutor.class);
+        bind(WatchdogTimer.class);
         bind(ThreadingCore.class);
         bind(Synchronizer.class);
         bind(AcceptHandler.class);
