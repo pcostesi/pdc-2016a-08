@@ -20,13 +20,13 @@ public class CommandExecutorTest {
     public void testTheExecutorExecutesACommand() {
         thrown.expect(CommandException.class);
         thrown.expectMessage(CommandExecutor.EMPTY_CMD);
-        CommandExecutor.excute(new String[] {});
+        CommandExecutor.execute(new String[] {});
     }
 
     @Test
     public void testUserCanBeMapped() {
         final UserMapping mapping = ConfigurationLoader.getUserMapping();
-        final String result = CommandExecutor.excute(new String[] { "map", "root@localhost", "example.com", "110" });
+        final String result = CommandExecutor.execute(new String[] { "map", "root@localhost", "example.com", "110" });
 
         assertEquals("root@localhost -> example.com:110", result);
         final Upstream mapped = mapping.getMappingForUsername("root@localhost");

@@ -17,7 +17,7 @@ public class CommandExecutor {
 
     private static UserMapping mapping = ConfigurationLoader.getUserMapping();
 
-    public static String excute(final String... line) {
+    public static String execute(final String... line) {
         if (line.length == 0) {
             throw new CommandException(EMPTY_CMD);
         }
