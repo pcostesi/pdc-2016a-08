@@ -34,6 +34,7 @@ public final class POP3Server {
     private static final Logger logger = LoggerFactory.getLogger(POP3Server.class);
     private final Reactor demultiplexor;
     private final Server pop3;
+    private final ConfigurationLoader configurator;
 
     // Handler injections:
     @Inject private AcceptHandler acceptHandler;
@@ -42,15 +43,15 @@ public final class POP3Server {
     @Inject private ConnectHandler connectHandler;
 
     @Inject
-    private POP3Server(final Reactor demultiplexor, final Server pop3) {
+    private POP3Server(final Reactor demultiplexor, final Server pop3, final ConfigurationLoader configurator) {
         this.demultiplexor = demultiplexor;
         this.pop3 = pop3;
+        this.configurator = configurator;
     }
 
     public void run() throws IOException {
 
-        final ProxyConfiguration config = ConfigurationLoader.getProxyConfig();
-
+        final ProxyConfiguration config = configurator.getProxyConfig();
         /*
          ** Fábricas de 'attachments'. Cada servidor puede tener una fábrica
          * distinta en cada puerto de escucha (es decir, en cada 'listener'):
