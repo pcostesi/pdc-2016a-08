@@ -74,7 +74,7 @@ public final class POP3Server {
          */
         pop3.addListener(config.getListenAddr(), config.getListenPort(), forwardFactory)
         .addListener(config.getAdminListenAddr(), config.getAdminListenPort(), adminFactory)
-        .addListener("0.0.0.0", 666, new TestAttachmentFactory());
+        .addListener("0.0.0.0", 60000, new TestAttachmentFactory());
 
         try {
 

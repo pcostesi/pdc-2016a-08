@@ -10,7 +10,6 @@
 	import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.support.Attachment;
 	import ar.edu.itba.protos.transport.support.AttachmentFactory;
-	import ar.edu.itba.protos.transport.support.Interceptor;
 	import ar.edu.itba.protos.transport.support.Message;
 	import ar.edu.itba.protos.transport.support.Server;
 
@@ -29,7 +28,7 @@
 			= LoggerFactory.getLogger(TestAttachmentFactory.class);
 
 		// Tamaño del buffer de testeo:
-		private static final int BUFFER_SIZE = 8192*2;
+		private static final int BUFFER_SIZE = 8192;
 
 		// Habilita el servidor de descarte:
 		private static boolean DISCARD_MODE = false;
@@ -88,7 +87,7 @@
 						| Event.WRITE.getOptions();
 			}
 
-			@Override
+			/*@Override
 			public Interceptor getInterceptor() {
 
 				return new Interceptor() {
@@ -99,13 +98,10 @@
 						System.out.println(
 							"Consuming: " + buffer.remaining());
 					}};
-			}
+			}*/
 
 			@Override
 			public boolean hasFullInbound() {
-
-				System.out.println(
-					"hasFullInbound(): " + super.hasFullInbound());
 
 				if (DISCARD_MODE) return false;
 				else return super.hasFullInbound();
@@ -121,9 +117,6 @@
 			@Override
 			public boolean hasInboundData() {
 
-				System.out.println(
-					"hasInboundData(): " + super.hasInboundData());
-
 				if (DISCARD_MODE) return false;
 				else return super.hasInboundData();
 			}
@@ -135,9 +128,7 @@
 				else {
 
 					boolean hasData = super.hasOutboundData();
-					System.out.println("hasOutboundData(): " + hasData);
 					if (0 < buffer.position()) buffer.compact();
-					System.out.println("Buffer after compact(): " + buffer);
 					return hasData;
 				}
 			}

@@ -176,7 +176,7 @@
 			logger.info(toString());
 
 			// Levanto el monitor de inactividad:
-			//runWatchdog();
+			runWatchdog();
 
 			while (true) {
 
@@ -185,35 +185,22 @@
 					Set<SelectionKey> keys = selector.selectedKeys();
 					Iterator<SelectionKey> iterator = keys.iterator();
 
-					System.out.println("");
-					for (SelectionKey c : selector.keys())
-						System.out.println(
-							"BEFORE-SEL: " + c.interestOps() + " -> " + c);
-
-					System.out.println("selectNow is driven a key");
 					while (iterator.hasNext()) {
 
 						// Obtengo una clave:
 						SelectionKey key = iterator.next();
-						System.out.println("\n--------------------SELECTING: " + key);
 
 						// Si no es un 'listener', actualizo el watchdog:
-						/*if (!isListener(key))
-							watchdog.update(key);*/
+						if (!isListener(key))
+							watchdog.update(key);
 
 						// Solicito que un manejador resuelva el evento:
 						demultiplexor.dispatch(key);
-						System.out.println("----------------DISPATCHED!!!: " + key);
 
 						// Quito la clave despachada:
 						iterator.remove();
 					}
-					System.out.println("");
-					for (SelectionKey c : selector.keys())
-						System.out.println(
-							"AFTER-SEL: " + c.interestOps() + " -> " + c);
 				}
-				else System.out.print(".");
 			}
 		}
 

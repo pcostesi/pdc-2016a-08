@@ -115,16 +115,16 @@
 			handler.onSubmit(key);
 
 			// Despachar una nueva tarea en algún worker:
-			//pool.execute(new Runnable() {
+			pool.execute(new Runnable() {
 
-				//public void run() {
+				public void run() {
 
 					// Ejecutar manejador y reponer claves:
 					handler.handle(key);
 					handler.onResume(key);
 					sync.restore(key);
-				//}
-			//});
+				}
+			});
 		}
 
 		/**

@@ -68,15 +68,11 @@
 
 		public void onResume(SelectionKey key) {
 
-			System.out.println("> READ.onResume()");
 			SelectionKey upstream
 				= ((Attachment) key.attachment()).getUpstream();
 
 			if (key != upstream && upstream != null)
 				sync.restore(upstream);
-
-			System.out.println(
-				Thread.currentThread() + " | READ.onResume()");
 		}
 
 		/**
@@ -93,7 +89,6 @@
 
 		public void handle(SelectionKey key) {
 
-			System.out.println("\n>>> READ");
 			Attachment attachment = (Attachment) key.attachment();
 			ByteBuffer buffer = attachment.getInboundBuffer();
 			SocketChannel socket = attachment.getSocket();
@@ -141,7 +136,6 @@
 				// Si hay información para enviar, abro el 'upstream':
 				detectInbound(attachment);
 			}
-			System.out.println("<<< READ.");
 		}
 
 		/**

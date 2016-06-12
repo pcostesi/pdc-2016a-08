@@ -67,15 +67,11 @@
 
 		public void onResume(SelectionKey key) {
 
-			System.out.println("> WRITE.onResume()");
 			SelectionKey upstream
 				= ((Attachment) key.attachment()).getUpstream();
 
 			if (key != upstream && upstream != null)
 				sync.restore(upstream);
-
-			System.out.println(
-					Thread.currentThread() + " | WRITE.onResume()");
 		}
 
 		/**
@@ -92,7 +88,6 @@
 
 		public void handle(SelectionKey key) {
 
-			System.out.println("\n>>> WRITE");
 			Attachment attachment = (Attachment) key.attachment();
 			ByteBuffer buffer = attachment.getOutboundBuffer();
 			SocketChannel socket = attachment.getSocket();
@@ -105,14 +100,12 @@
 				// Si no hay espacio, hay que rehabilitar la lectura:
 				if (buffer.position() == buffer.limit()) full = true;
 
-				System.out.println("Full? : " + full);
 				// Veo qué hay para enviar:
 				buffer.flip();
-System.out.println("Buffer: " + buffer);
-System.out.println("Writing: " + buffer.remaining());
+
 				// Enviar un flujo de datos:
 				int written = socket.write(buffer);
-				System.out.println("Buffer (after write): " + buffer);
+
 				// Si se envió todo el flujo, deshabilitar escritura:
 				if (!attachment.hasOutboundData())
 					sync.disable(key, Event.WRITE);
@@ -134,7 +127,6 @@ System.out.println("Writing: " + buffer.remaining());
 				// Si hay información para enviar, abro el 'upstream':
 				detectInbound(attachment);
 			}
-			System.out.println("<<< WRITE.");
 		}
 
 		/**
