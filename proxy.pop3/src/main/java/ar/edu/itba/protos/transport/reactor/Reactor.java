@@ -198,9 +198,19 @@
 
 					Set<Handler> set = handlers.get(event);
 
-					if (set != null && isOn(event, key))
+					if (set != null && isOn(event, key)) {
+
 						for (Handler handler : set)
 							core.submit(handler, key);
+
+						/* Solo un evento por vez, debido a que
+						** las claves pueden responder simultáneamente
+						** a varios eventos, y esto puede causar una
+						** condición de carrera durante la registración
+						** en el repositorio de claves.
+						*/
+						return;
+					}
 				}
 			}
 			catch (CancelledKeyException exception) {

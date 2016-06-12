@@ -81,7 +81,9 @@
 				= ((Attachment) key.attachment()).getUpstream();
 
 			if (key != upstream && upstream != null)
-				sync.restore(upstream);
+				sync.restore(key, upstream);
+
+			else sync.restore(key);
 		}
 
 		/**

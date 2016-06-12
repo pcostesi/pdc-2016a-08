@@ -62,7 +62,7 @@
 		* todas las claves se pierde para siempre.</p>
 		*/
 
-		public void desynchronize() {
+		public synchronized void desynchronize() {
 
 			keys.clear();
 		}
@@ -187,6 +187,29 @@
 
 				keys.remove(key);
 			}
+		}
+
+		/**
+		* <p>Este método es equivalente a la versión de <b>restore</b> que
+		* recibe solo un parámetro (una sola clave). La diferencia radica
+		* en que permite reestablecer el estado de múltiples claves de
+		* forma atómica.</p>
+		*
+		* @param keys
+		* 	Las claves para las cuales se repondrá el estado actualizado.
+		*
+		* @throws IllegalArgumentException
+		*	En caso de que alguna clave sea <i>null</i>.
+		*/
+
+		public synchronized void restore(SelectionKey... keys) {
+
+			/* Los métodos 'synchonized' son reentrantes,
+			** por lo tanto no hay problemas en ejecutar un
+			** método sincronizado, dentro de otro.
+			*/
+			for (SelectionKey key : keys)
+				restore(key);
 		}
 
 		/**

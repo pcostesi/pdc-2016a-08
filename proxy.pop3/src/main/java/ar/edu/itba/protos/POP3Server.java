@@ -90,7 +90,7 @@ public final class POP3Server {
         // Quitar todos los manejadores del demultiplexor global:
         demultiplexor.unplug();
 
-        // Bloquear por completo el rector:
+        // Bloquear por completo el reactor:
         demultiplexor.block();
 
         logger.info(Message.SHUTDOWN_COMPLETE.getMessage());

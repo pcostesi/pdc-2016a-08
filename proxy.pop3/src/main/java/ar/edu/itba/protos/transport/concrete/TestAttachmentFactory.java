@@ -40,10 +40,6 @@
 		private static final String greetingBanner
 			= ">> Test Server\n";
 
-		// Mensaje generado durante una desconexión:
-		private static final String unplugMessage
-			= "test.Unplug()";
-
 		@Override
 		public Attachment create() {
 
@@ -55,6 +51,9 @@
 			// El buffer utilizado:
 			private ByteBuffer buffer
 				= ByteBuffer.allocate(BUFFER_SIZE);
+
+			// Indica si se activó la señal de cierre:
+			private boolean signalUnplug = false;
 
 			public TestAttachment() {
 
@@ -87,19 +86,6 @@
 						| Event.WRITE.getOptions();
 			}
 
-			/*@Override
-			public Interceptor getInterceptor() {
-
-				return new Interceptor() {
-
-					@Override
-					public void consume(ByteBuffer buffer) {
-
-						System.out.println(
-							"Consuming: " + buffer.remaining());
-					}};
-			}*/
-
 			@Override
 			public boolean hasFullInbound() {
 
@@ -127,6 +113,11 @@
 				if (DISCARD_MODE) return false;
 				else {
 
+					if (signalUnplug) {
+
+						closeDownstream();
+						return false;
+					}
 					boolean hasData = super.hasOutboundData();
 					if (0 < buffer.position()) buffer.compact();
 					return hasData;
@@ -145,9 +136,8 @@
 					Message.CLIENT_UNPLUGGED.getMessage(),
 					Server.tryToResolveAddress(downstream));
 
-				buffer.clear();
-				buffer.put(unplugMessage.getBytes());
-				closeUpstream();
+				if (event == Event.READ)
+					signalUnplug = true;
 			}
 		};
 	}

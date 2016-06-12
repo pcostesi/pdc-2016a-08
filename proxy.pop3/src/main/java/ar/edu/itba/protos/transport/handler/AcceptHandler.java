@@ -156,8 +156,8 @@
 					this.getClass().getSimpleName());
 			}
 
-			// Repone el estado de la conexión entrante:
-			if (downstream != null)
-				sync.restore(downstream);
+			// Repone el estado de las claves:
+			if (downstream != null) sync.restore(key, downstream);
+			else sync.restore(key);
 		}
 	}

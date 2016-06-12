@@ -149,7 +149,7 @@
 		* las claves registradas, ni cerrar sus canales.</p>
 		*/
 
-		public void removeAll() {
+		public synchronized void removeAll() {
 
 			activities.clear();
 		}
@@ -163,7 +163,7 @@
 		*	La clave a actualizar en el monitor.
 		*/
 
-		public void update(SelectionKey key) {
+		public synchronized void update(SelectionKey key) {
 
 			removeActivity(key);
 			addActivity(key);

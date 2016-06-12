@@ -122,7 +122,6 @@
 					// Ejecutar manejador y reponer claves:
 					handler.handle(key);
 					handler.onResume(key);
-					sync.restore(key);
 				}
 			});
 		}

@@ -72,7 +72,9 @@
 				= ((Attachment) key.attachment()).getUpstream();
 
 			if (key != upstream && upstream != null)
-				sync.restore(upstream);
+				sync.restore(key, upstream);
+
+			else sync.restore(key);
 		}
 
 		/**
@@ -126,11 +128,9 @@
 			catch (IOException exception) {
 
 				// Elimino la clave del repositorio:
-				sync.delete(key);
+				sync.disable(key, Event.READ);
 
 				// Desconecto el 'downstream':
-				attachment.closeDownstream();
-				attachment.setDownstream(null);
 				attachment.onUnplug(Event.READ);
 
 				// Si hay información para enviar, abro el 'upstream':

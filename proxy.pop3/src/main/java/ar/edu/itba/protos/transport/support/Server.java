@@ -33,7 +33,7 @@
 	public final class Server {
 
 		// TODO: obtener por configuración Pablo!!!
-		/**/private static final long TIMEOUT = 15000;
+		/**/private static final long TIMEOUT = 5000;
 		/**/private static final long LAZY_INTERVAL_DETECTION = 1000;
 
 		// Logger:
@@ -180,6 +180,11 @@
 
 			while (true) {
 
+				/* En lugar de usar 'select(TIMEOUT)' (o sin timeout),
+				** utilizamos 'selectNow()' para evitar 'starvation' entre
+				** los demás threads, ya que las operaciones sobre el
+				** selector y las claves son bloqueantes.
+				*/
 				if (0 < selector.selectNow()) {
 
 					Set<SelectionKey> keys = selector.selectedKeys();
