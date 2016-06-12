@@ -56,7 +56,7 @@
 		* @return El umbral máximo de inactividad, en milisegundos.
 		*/
 
-		public long getTimeout() {
+		public synchronized long getTimeout() {
 
 			return timeout;
 		}

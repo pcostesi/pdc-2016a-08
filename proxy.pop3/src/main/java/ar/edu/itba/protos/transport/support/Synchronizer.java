@@ -85,6 +85,7 @@
 
 		public synchronized void disable(SelectionKey key, Event event) {
 
+			System.out.println("sync.Disable() -> " + event);
 			if (key == null || event == null)
 				throw new IllegalArgumentException();
 
@@ -114,6 +115,7 @@
 
 		public synchronized void enable(SelectionKey key, Event event) {
 
+			System.out.println("sync.Enable() -> " + event);
 			if (key == null || event == null)
 				throw new IllegalArgumentException();
 
@@ -174,10 +176,12 @@
 
 		public synchronized void restore(SelectionKey key) {
 
+			System.out.println("RESTORE: " + key);
 			if (key == null)
 				throw new IllegalArgumentException();
 
 			MutableInt options = keys.get(key);
+			System.out.println(	"RESTORE value: " + options);
 			try {
 
 				if (options != null)
@@ -185,8 +189,10 @@
 			}
 			catch (CancelledKeyException exception) {
 
+				System.out.println("########################RESTORE cancelled");
 				keys.remove(key);
 			}
+			System.out.println("Ending restore...");
 		}
 
 		/**
@@ -216,17 +222,23 @@
 
 		public synchronized void save(SelectionKey key) {
 
+			System.out.println("SAVE: " + key);
+
 			if (key == null)
 				throw new IllegalArgumentException();
 
 			try {
 
-				keys.put(key, new MutableInt(key.interestOps()));
+				MutableInt options = new MutableInt(key.interestOps());
+				System.out.println("	SAVE value: " + options);
+				keys.put(key, options);
 				key.interestOps(0);
 			}
 			catch (CancelledKeyException exception) {
 
+				System.out.println("########################save cancelled");
 				keys.remove(key);
 			}
+			System.out.println("Ending saving...");
 		}
 	}

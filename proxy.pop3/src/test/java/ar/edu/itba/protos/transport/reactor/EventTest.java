@@ -72,6 +72,9 @@
 			** un método de instancia, pero para simplificar la
 			** definición del mock 'validKey', lo hacemos de todas
 			** formas.
+			**
+			** FindBugs reporta ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD,
+			** pero el mismo puede suprimirse mediante @SuppressFBWarnings
 			*/
 			options = 0;
 		}

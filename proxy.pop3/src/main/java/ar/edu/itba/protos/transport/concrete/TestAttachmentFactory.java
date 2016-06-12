@@ -10,6 +10,7 @@
 	import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.support.Attachment;
 	import ar.edu.itba.protos.transport.support.AttachmentFactory;
+	import ar.edu.itba.protos.transport.support.Interceptor;
 	import ar.edu.itba.protos.transport.support.Message;
 	import ar.edu.itba.protos.transport.support.Server;
 
@@ -28,7 +29,13 @@
 			= LoggerFactory.getLogger(TestAttachmentFactory.class);
 
 		// Tamaño del buffer de testeo:
-		private static final int BUFFER_SIZE = 8192;
+		private static final int BUFFER_SIZE = 8192*2;
+
+		// Habilita el servidor de descarte:
+		private static boolean DISCARD_MODE = false;
+
+		// Envía el 'greeting-banner' inicial:
+		private static boolean SEND_GREETING = false;
 
 		// Mensaje generado durante una desconexión:
 		private static final String greetingBanner
@@ -53,12 +60,15 @@
 			public TestAttachment() {
 
 				buffer.clear();
-				buffer.put(greetingBanner.getBytes());
+				if (!DISCARD_MODE)
+					if (SEND_GREETING)
+						buffer.put(greetingBanner.getBytes());
 			}
 
 			@Override
 			public ByteBuffer getInboundBuffer() {
 
+				if (DISCARD_MODE) buffer.clear();
 				return buffer;
 			}
 
@@ -71,8 +81,34 @@
 			@Override
 			public int getInitialOptions() {
 
-				return Event.READ.getOptions()
-					| Event.WRITE.getOptions();
+				if (DISCARD_MODE | !SEND_GREETING)
+					return Event.READ.getOptions();
+				else
+					return Event.READ.getOptions()
+						| Event.WRITE.getOptions();
+			}
+
+			@Override
+			public Interceptor getInterceptor() {
+
+				return new Interceptor() {
+
+					@Override
+					public void consume(ByteBuffer buffer) {
+
+						System.out.println(
+							"Consuming: " + buffer.remaining());
+					}};
+			}
+
+			@Override
+			public boolean hasFullInbound() {
+
+				System.out.println(
+					"hasFullInbound(): " + super.hasFullInbound());
+
+				if (DISCARD_MODE) return false;
+				else return super.hasFullInbound();
 			}
 
 			@Override
@@ -83,11 +119,27 @@
 			}
 
 			@Override
+			public boolean hasInboundData() {
+
+				System.out.println(
+					"hasInboundData(): " + super.hasInboundData());
+
+				if (DISCARD_MODE) return false;
+				else return super.hasInboundData();
+			}
+
+			@Override
 			public boolean hasOutboundData() {
 
-				boolean hasData = super.hasOutboundData();
-				if (0 < buffer.position()) buffer.compact();
-				return hasData;
+				if (DISCARD_MODE) return false;
+				else {
+
+					boolean hasData = super.hasOutboundData();
+					System.out.println("hasOutboundData(): " + hasData);
+					if (0 < buffer.position()) buffer.compact();
+					System.out.println("Buffer after compact(): " + buffer);
+					return hasData;
+				}
 			}
 
 			@Override

@@ -14,7 +14,6 @@
 	import com.google.inject.Inject;
 	import com.google.inject.Singleton;
 
-	import ar.edu.itba.protos.transport.reactor.Event;
 	import ar.edu.itba.protos.transport.reactor.Handler;
 	import ar.edu.itba.protos.transport.support.Attachment;
 	import ar.edu.itba.protos.transport.support.AttachmentFactory;
@@ -58,11 +57,9 @@
 		/*
 		** No es necesario implementar estas funcionalidades
 		** debido a que 'ThreadingCore' ya se encarga lo
-		** suficiente. Además, la nueva conexión entrante no
-		** requiere sincronización, debido a que este handler
-		** es el único que posee referencia hacia ella, y por
-		** lo tanto, la misma se encuentra a salvo durante la
-		** ejecución de este manejador.
+		** suficiente. Además, la nueva conexión entrante se
+		** sincroniza internamente, debido a que este handler
+		** es el único que posee referencia hacia ella.
 		*/
 
 		public void onSubmit(SelectionKey key) {}
@@ -86,8 +83,6 @@
 		*/
 
 		public void handle(SelectionKey key) {
-
-			logger.debug("Accept ({})", key);
 
 			// La clave del nuevo cliente:
 			SelectionKey downstream = null;
@@ -120,6 +115,9 @@
 						.configureBlocking(false)
 						.register(key.selector(), 0, attachment);
 
+					// Almacenar el estado de la nueva clave:
+					sync.save(downstream);
+
 					if (attachment != null) {
 
 						// Especifico el flujo que identifica este canal:
@@ -129,7 +127,7 @@
 						attachment.setSynchronizer(sync);
 
 						// Configura los eventos iniciales para este canal:
-						Event.enable(
+						sync.enable(
 							downstream,
 							attachment.getInitialOptions());
 
@@ -157,5 +155,9 @@
 					Message.UNKNOWN.getMessage(),
 					this.getClass().getSimpleName());
 			}
+
+			// Repone el estado de la conexión entrante:
+			if (downstream != null)
+				sync.restore(downstream);
 		}
 	}

@@ -96,8 +96,6 @@
 
 		public void handle(SelectionKey key) {
 
-			logger.debug("Connect ({})", key);
-
 			Attachment attachment = (Attachment) key.attachment();
 
 			try {

@@ -6,9 +6,6 @@
 	import java.nio.channels.SelectionKey;
 	import java.nio.channels.SocketChannel;
 
-	import org.slf4j.Logger;
-	import org.slf4j.LoggerFactory;
-
 	import com.google.inject.Inject;
 	import com.google.inject.Singleton;
 
@@ -28,10 +25,6 @@
 
 	@Singleton
 	public final class ReadHandler implements Handler {
-
-		// Logger:
-		private static final Logger logger
-			= LoggerFactory.getLogger(ReadHandler.class);
 
 		// Esta constante indica que el stream se ha cerrado:
 		private static final int BROKEN_PIPE = -1;
@@ -75,11 +68,15 @@
 
 		public void onResume(SelectionKey key) {
 
+			System.out.println("> READ.onResume()");
 			SelectionKey upstream
 				= ((Attachment) key.attachment()).getUpstream();
 
 			if (key != upstream && upstream != null)
 				sync.restore(upstream);
+
+			System.out.println(
+				Thread.currentThread() + " | READ.onResume()");
 		}
 
 		/**
@@ -96,8 +93,7 @@
 
 		public void handle(SelectionKey key) {
 
-			logger.debug("Read ({})", key);
-
+			System.out.println("\n>>> READ");
 			Attachment attachment = (Attachment) key.attachment();
 			ByteBuffer buffer = attachment.getInboundBuffer();
 			SocketChannel socket = attachment.getSocket();
@@ -145,6 +141,7 @@
 				// Si hay información para enviar, abro el 'upstream':
 				detectInbound(attachment);
 			}
+			System.out.println("<<< READ.");
 		}
 
 		/**
