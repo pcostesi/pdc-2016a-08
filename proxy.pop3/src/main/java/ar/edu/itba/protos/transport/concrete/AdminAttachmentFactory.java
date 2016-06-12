@@ -5,17 +5,25 @@
 	import ar.edu.itba.protos.transport.support.AttachmentFactory;
 
 		/**
-		* El objetivo de esta fábrica es generar los 'attachment'
+		* <p>El objetivo de esta fábrica es generar los <b>attachment</b>
 		* asociados a conexiones de administración, es decir, a las
 		* conexiones hacia este servidor, cuyo objetivo es modificar
 		* los parámetros de configuración del mismo, o bien, obtener
-		* las estadísticas y métricas del estado actual del sistema.
+		* las estadísticas y métricas del estado actual del sistema.</p>
 		*/
 
 	public final class AdminAttachmentFactory implements AttachmentFactory {
 
 		// TODO: Debería obtenerse por configuración:
 		public static final int BUFFER_SIZE = 8192;
+
+		/**
+		* <p>Genera un nuevo <i>attachment</i> de administración.</p>
+		*
+		* @return Devuelve un objeto <b>AdminAttachment</b>, el cual
+		*	se encarga de gestionar la administración remota del
+		*	servidor.
+		*/
 
 		public Attachment create() {
 

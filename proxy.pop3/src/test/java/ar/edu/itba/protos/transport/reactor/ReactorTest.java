@@ -5,24 +5,49 @@
 	import static org.junit.Assume.*;
 	import static org.mockito.Mockito.*;
 
+	import java.nio.channels.CancelledKeyException;
 	import java.nio.channels.SelectionKey;
 
+	import org.junit.AfterClass;
 	import org.junit.Before;
+	import org.junit.BeforeClass;
 	import org.junit.Test;
 	import org.mockito.Mockito;
 
+	import com.google.inject.Guice;
+	import com.google.inject.Injector;
+	import com.google.inject.Stage;
+
+	import ar.edu.itba.protos.DIModule;
+
 	public class ReactorTest {
 
-		private Reactor reactor = null;
+		private final static Injector injector
+			= Guice.createInjector(Stage.PRODUCTION, new DIModule());
+
+		private static Reactor reactor = null;
+
 		private SelectionKey key = null;
 		private Handler handler = null;
 		private Handler otherHandler = null;
 		private Handler readHandler = null;
 
+		@BeforeClass
+		public static void injectReactor() {
+
+			reactor = injector.getInstance(Reactor.class);
+		}
+
+		@AfterClass
+		public static void blockReactor() {
+
+			reactor.block();
+		}
+
 		@Before
 		public void init() {
 
-			reactor = new Reactor();
+			reactor.unplug();
 
 			key = Mockito.mock(SelectionKey.class);
 			handler = Mockito.mock(Handler.class);
@@ -136,11 +161,20 @@
 						++eventsOn;
 				assertEquals(1, eventsOn);
 			}
+		}
 
-			doReturn(false).when(key).isValid();
-			when(key.readyOps()).thenReturn(-1);
+		@Test(expected = CancelledKeyException.class)
+		public void isOnThrowsExceptions() {
+
+			SelectionKey cancelledKey
+				= Mockito.mock(SelectionKey.class);
+			when(cancelledKey.readyOps())
+				.thenThrow(CancelledKeyException.class);
+			when(cancelledKey.isValid())
+				.thenReturn(false);
+
 			for (Event event : Event.values())
-				assertFalse(Reactor.isOn(event, key));
+				Reactor.isOn(event, cancelledKey);
 		}
 
 		@Test
@@ -158,8 +192,17 @@
 				reactor.dispatch(key);
 			}
 
+			try {
+
+				/* Debido a que utiliza threads, es necesario
+				** darle algo de tiempo para que 'verify' no falle.
+				*/
+				Thread.sleep(3000);
+			}
+			catch (InterruptedException spurious) {}
+
 			verify(handler, times(reactor.getEvents())).handle(key);
 			verify(otherHandler, times(reactor.getEvents())).handle(key);
-			verify(readHandler, times(1)).handle(key);
+			verify(readHandler).handle(key);
 		}
 	}
