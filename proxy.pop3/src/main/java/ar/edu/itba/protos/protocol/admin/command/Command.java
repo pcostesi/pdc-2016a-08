@@ -1,4 +1,6 @@
-package ar.edu.itba.protos.protocol.admin;
+package ar.edu.itba.protos.protocol.admin.command;
+
+import ar.edu.itba.protos.protocol.admin.CommandException;
 
 @FunctionalInterface
 public interface Command {
