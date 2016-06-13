@@ -10,7 +10,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-public class UserUpstreamMap {
+final class UserUpstreamMap {
 
     @XmlElement(name = "map")
     public List<UserUpstreamPair> mapping = new ArrayList<>();
