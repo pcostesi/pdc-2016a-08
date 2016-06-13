@@ -39,6 +39,17 @@ public class CommandExecutorTest {
     }
 
     @Test
+    public void testInvalidNumberOfParameters() {
+        final CommandExecutor executor = new CommandExecutor();
+
+        final CommandResult result = executor.execute("map", "root@localhost");
+        assertEquals(result.isOk(), false);
+        assertEquals(result.getOriginalMessage(), "Invalid number of parameters:\n" +
+                "Expected: user, host, port\n" +
+                "Got:      root@localhost");
+    }
+
+    @Test
     public void testUserCanBeMapped() {
         final UserMapping mapping = Mockito.spy(UserMapping.class);
         final ConfigurationLoader mockedConfigurator = Mockito.mock(ConfigurationLoader.class);

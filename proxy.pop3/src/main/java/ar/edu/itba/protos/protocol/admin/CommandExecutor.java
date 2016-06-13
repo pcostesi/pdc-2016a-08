@@ -48,8 +48,16 @@ public class CommandExecutor {
         if (line.length == 0) {
             return CommandResult.err(EMPTY_CMD);
         }
-        final String[] params = line.length > 1 ? Arrays.copyOfRange(line, 1, line.length) : new String[] {};
         final AdminProtocolToken symbol = AdminProtocolToken.isCommand(line[0]);
+        final String[] params = line.length > 1 ? Arrays.copyOfRange(line, 1, line.length) : new String[] {};
+
+        if (params.length != symbol.getParams().length) {
+            final String msg = String.format("Invalid number of parameters:\n" +
+                    "Expected: %s\n" +
+                    "Got:      %s", String.join(", ", symbol.getParams()), String.join(", ", params));
+            return CommandResult.err(msg);
+        }
+
         final Command cmd = commands.get(symbol);
         if (cmd == null) {
             return CommandResult.err(NO_SUCH_CMD);

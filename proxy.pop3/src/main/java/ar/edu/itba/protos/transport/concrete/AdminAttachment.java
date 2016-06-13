@@ -89,6 +89,5 @@ public final class AdminAttachment extends Attachment implements Interceptor {
                 .map(AdminAttachment::serializeResult)
                 .collect(Collectors.toList());
         outboundResults.addAll(results);
-
     }
 }
