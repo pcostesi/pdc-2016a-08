@@ -15,6 +15,7 @@ import ar.edu.itba.protos.protocol.admin.CommandException;
 import ar.edu.itba.protos.protocol.admin.CommandExecutor;
 import ar.edu.itba.protos.protocol.admin.command.Command;
 import ar.edu.itba.protos.protocol.admin.command.GetAllMappingsCommand;
+import ar.edu.itba.protos.protocol.admin.command.GetDefaultMappingCommand;
 import ar.edu.itba.protos.protocol.admin.command.MapDefaultCommand;
 import ar.edu.itba.protos.protocol.admin.command.MapUserCommand;
 import ar.edu.itba.protos.protocol.admin.command.UnMapUserCommand;
@@ -108,5 +109,20 @@ public class CommandExecutorTest {
 
         assertEquals("example.co.uk:110", result);
         Mockito.verify(mapping).setDefaultUpstream("example.co.uk", 110);
+    }
+
+    @Test
+    public void testWecCanGetTheDefaultMapping() {
+        final UserMapping mapping = Mockito.spy(UserMapping.class);
+        mapping.setDefaultUpstream("example.com", 110);
+
+        final ConfigurationLoader mockedConfigurator = Mockito.mock(ConfigurationLoader.class);
+        Mockito.when(mockedConfigurator.getUserMapping()).then((i) -> mapping);
+
+        final Command command = new GetDefaultMappingCommand(mockedConfigurator);
+        final String result = command.execute();
+
+        assertEquals("example.com:110", result);
+        Mockito.verify(mapping).getDefaultUpstream();
     }
 }
