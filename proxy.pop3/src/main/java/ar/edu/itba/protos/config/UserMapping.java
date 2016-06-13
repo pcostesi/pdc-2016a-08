@@ -36,4 +36,8 @@ public class UserMapping {
         userMappings.put(username, new Upstream(host, port));
     }
 
+    public void unmapUser(final String username) {
+        userMappings.remove(username);
+    }
+
 }
