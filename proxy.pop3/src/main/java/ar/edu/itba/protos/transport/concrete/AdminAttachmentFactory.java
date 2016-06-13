@@ -1,32 +1,34 @@
 
-	package ar.edu.itba.protos.transport.concrete;
+package ar.edu.itba.protos.transport.concrete;
 
-	import ar.edu.itba.protos.transport.support.Attachment;
-	import ar.edu.itba.protos.transport.support.AttachmentFactory;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 
-		/**
-		* <p>El objetivo de esta fábrica es generar los <b>attachment</b>
-		* asociados a conexiones de administración, es decir, a las
-		* conexiones hacia este servidor, cuyo objetivo es modificar
-		* los parámetros de configuración del mismo, o bien, obtener
-		* las estadísticas y métricas del estado actual del sistema.</p>
-		*/
+import ar.edu.itba.protos.transport.support.Attachment;
+import ar.edu.itba.protos.transport.support.AttachmentFactory;
 
-	public final class AdminAttachmentFactory implements AttachmentFactory {
+/**
+ * <p>El objetivo de esta fábrica es generar los <b>attachment</b>
+ * asociados a conexiones de administración, es decir, a las
+ * conexiones hacia este servidor, cuyo objetivo es modificar
+ * los parámetros de configuración del mismo, o bien, obtener
+ * las estadísticas y métricas del estado actual del sistema.</p>
+ */
 
-		// TODO: Debería obtenerse por configuración:
-		public static final int BUFFER_SIZE = 8192;
+public final class AdminAttachmentFactory implements AttachmentFactory {
 
-		/**
-		* <p>Genera un nuevo <i>attachment</i> de administración.</p>
-		*
-		* @return Devuelve un objeto <b>AdminAttachment</b>, el cual
-		*	se encarga de gestionar la administración remota del
-		*	servidor.
-		*/
-
-		public Attachment create() {
-
-			return new AdminAttachment();
-		}
-	}
+    // TODO: Debería obtenerse por configuración:
+    public static final int BUFFER_SIZE = 8192;
+    private final Injector injector = Guice.createInjector();
+    /**
+     * <p>Genera un nuevo <i>attachment</i> de administración.</p>
+     *
+     * @return Devuelve un objeto <b>AdminAttachment</b>, el cual
+     *	se encarga de gestionar la administración remota del
+     *	servidor.
+     */
+    @Override
+    public Attachment create() {
+        return injector.getInstance(AdminAttachment.class);
+    }
+}
