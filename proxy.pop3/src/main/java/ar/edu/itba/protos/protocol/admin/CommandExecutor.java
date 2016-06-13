@@ -53,7 +53,6 @@ public class CommandExecutor {
         if (line.length == 0) {
             return CommandResult.err(EMPTY_CMD);
         }
-        logger.debug("<{}>", line[0].getBytes());
         final AdminProtocolToken symbol = AdminProtocolToken.isCommand(line[0]);
         final String[] params = line.length > 1 ? Arrays.copyOfRange(line, 1, line.length) : new String[] {};
 
