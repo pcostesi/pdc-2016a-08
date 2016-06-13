@@ -2,18 +2,16 @@ package ar.edu.itba.protos;
 
 import static org.junit.Assert.assertEquals;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.mockito.Mockito;
 
 import ar.edu.itba.protos.config.ConfigurationLoader;
 import ar.edu.itba.protos.config.Upstream;
 import ar.edu.itba.protos.config.UserMapping;
 import ar.edu.itba.protos.config.UserUpstreamPair;
-import ar.edu.itba.protos.protocol.admin.CommandException;
 import ar.edu.itba.protos.protocol.admin.CommandExecutor;
 import ar.edu.itba.protos.protocol.admin.command.Command;
+import ar.edu.itba.protos.protocol.admin.command.CommandResult;
 import ar.edu.itba.protos.protocol.admin.command.GetAllMappingsCommand;
 import ar.edu.itba.protos.protocol.admin.command.GetDefaultMappingCommand;
 import ar.edu.itba.protos.protocol.admin.command.MapDefaultCommand;
@@ -21,26 +19,34 @@ import ar.edu.itba.protos.protocol.admin.command.MapUserCommand;
 import ar.edu.itba.protos.protocol.admin.command.UnMapUserCommand;
 
 public class CommandExecutorTest {
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
 
     @Test
     public void testTheExecutorDoesNotExecuteEmptyCommands() {
         final CommandExecutor executor = new CommandExecutor();
 
-        thrown.expect(CommandException.class);
-        thrown.expectMessage(CommandExecutor.EMPTY_CMD);
-        executor.execute(new String[] {});
+        final CommandResult result = executor.execute(new String[] {});
+        assertEquals(result.isOk(), false);
+        assertEquals(result.getOriginalMessage(), CommandExecutor.EMPTY_CMD);
     }
 
     @Test
     public void testTheExecutorDoesNotFindACommand() {
         final CommandExecutor executor = new CommandExecutor();
 
-        thrown.expect(CommandException.class);
-        thrown.expectMessage(CommandExecutor.NO_SUCH_CMD);
-        executor.execute("");
+        final CommandResult result = executor.execute("fake-command");
+        assertEquals(result.isOk(), false);
+        assertEquals(result.getOriginalMessage(), CommandExecutor.NO_SUCH_CMD);
+    }
+
+    @Test
+    public void testInvalidNumberOfParameters() {
+        final CommandExecutor executor = new CommandExecutor();
+
+        final CommandResult result = executor.execute("map", "root@localhost");
+        assertEquals(result.isOk(), false);
+        assertEquals(result.getOriginalMessage(), "Invalid number of parameters:\n" +
+                "Expected: user, host, port\n" +
+                "Got:      root@localhost");
     }
 
     @Test

@@ -8,6 +8,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import ar.edu.itba.protos.protocol.admin.command.Command;
+import ar.edu.itba.protos.protocol.admin.command.CommandResult;
 import ar.edu.itba.protos.protocol.admin.command.GetAllMappingsCommand;
 import ar.edu.itba.protos.protocol.admin.command.GetDefaultMappingCommand;
 import ar.edu.itba.protos.protocol.admin.command.MapDefaultCommand;
@@ -43,21 +44,25 @@ public class CommandExecutor {
         return commands.remove(symbol);
     }
 
-    public String execute(final String... line) {
+    public CommandResult execute(final String... line) {
         if (line.length == 0) {
-            throw new CommandException(EMPTY_CMD);
+            return CommandResult.err(EMPTY_CMD);
         }
-        final String[] params = line.length > 1 ? Arrays.copyOfRange(line, 1, line.length) : new String[] {};
         final AdminProtocolToken symbol = AdminProtocolToken.isCommand(line[0]);
+        final String[] params = line.length > 1 ? Arrays.copyOfRange(line, 1, line.length) : new String[] {};
+
+        if (params.length != symbol.getParams().length) {
+            final String msg = String.format("Invalid number of parameters:\n" +
+                    "Expected: %s\n" +
+                    "Got:      %s", String.join(", ", symbol.getParams()), String.join(", ", params));
+            return CommandResult.err(msg);
+        }
+
         final Command cmd = commands.get(symbol);
         if (cmd == null) {
-            throw new CommandException(NO_SUCH_CMD);
+            return CommandResult.err(NO_SUCH_CMD);
         }
-        final String cmdResult = cmd.execute(params);
-        if (cmdResult == null) {
-            return "";
-        }
-        return cmdResult;
+        return CommandResult.wrap(cmd, params);
     }
 
 }

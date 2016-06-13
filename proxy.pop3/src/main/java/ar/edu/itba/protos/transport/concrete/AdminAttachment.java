@@ -3,7 +3,9 @@ package ar.edu.itba.protos.transport.concrete;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import ar.edu.itba.protos.protocol.admin.AdminProtocolParser;
 import ar.edu.itba.protos.protocol.admin.CommandExecutor;
+import ar.edu.itba.protos.protocol.admin.command.CommandResult;
 import ar.edu.itba.protos.transport.reactor.Event;
 import ar.edu.itba.protos.transport.support.Attachment;
 import ar.edu.itba.protos.transport.support.Interceptor;
@@ -32,7 +35,7 @@ public final class AdminAttachment extends Attachment implements Interceptor {
     private final ByteBuffer ioBuffer = ByteBuffer.allocate(AdminAttachmentFactory.BUFFER_SIZE);
     private final CommandExecutor executor;
     private final AdminProtocolParser parser;
-    private final List<String> outboundResults = new ArrayList<>();
+    private final Deque<ByteBuffer> outboundResults = new LinkedList<>();
 
     @Inject
     public AdminAttachment(final CommandExecutor executor, final AdminProtocolParser parser) {
@@ -67,6 +70,11 @@ public final class AdminAttachment extends Attachment implements Interceptor {
         logger.debug("> Admin.onUnplug({})", event);
     }
 
+    private static ByteBuffer serializeResult(final CommandResult result) {
+        return ByteBuffer.wrap(result.getMessage().getBytes(StandardCharsets.US_ASCII));
+    }
+
+
     /*
      ** Este método se ejecuta cada vez que un nuevo flujo de bytes se presenta
      * en el canal asociado (inbound). Este método puede modificar el buffer
@@ -76,10 +84,10 @@ public final class AdminAttachment extends Attachment implements Interceptor {
     @Override
     public void consume(final ByteBuffer buffer) {
         final List<String[]> commands = parser.parse(buffer);
-        final List<String> results = commands.parallelStream()
+        final List<ByteBuffer> results = commands.parallelStream()
                 .map(executor::execute)
+                .map(AdminAttachment::serializeResult)
                 .collect(Collectors.toList());
         outboundResults.addAll(results);
-
     }
 }
