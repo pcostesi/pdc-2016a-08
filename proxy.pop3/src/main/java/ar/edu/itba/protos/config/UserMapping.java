@@ -15,10 +15,10 @@ public class UserMapping {
 
     @XmlElement(name = "mappings")
     @XmlJavaTypeAdapter(UserMappingAdapter.class)
-    public Map<String, Upstream> userMappings = new ConcurrentHashMap<>();
+    private final Map<String, Upstream> userMappings = new ConcurrentHashMap<>();
 
     @XmlElement(name = "default-upstream")
-    public Upstream defaultUpstream;
+    private Upstream defaultUpstream;
 
     public Upstream getMappingForUsername(final String username) {
         final Upstream mapping = userMappings.get(username);
@@ -41,9 +41,17 @@ public class UserMapping {
     }
 
     public UserUpstreamPair[] getAllMappings() {
-        return (UserUpstreamPair[]) userMappings.entrySet().stream()
+        return userMappings.entrySet().stream()
                 .map(e -> new UserUpstreamPair(e.getKey(), e.getValue()))
-                .toArray();
+                .toArray(i -> new UserUpstreamPair[i]);
+    }
+
+    public void setDefaultUpstream(final String host, final int port) {
+        defaultUpstream = new Upstream(host, port);
+    }
+
+    public Upstream getDefaultUpstream() {
+        return defaultUpstream;
     }
 
 }
