@@ -40,4 +40,10 @@ public class UserMapping {
         userMappings.remove(username);
     }
 
+    public UserUpstreamPair[] getAllMappings() {
+        return (UserUpstreamPair[]) userMappings.entrySet().stream()
+                .map(e -> new UserUpstreamPair(e.getKey(), e.getValue()))
+                .toArray();
+    }
+
 }

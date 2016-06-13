@@ -6,7 +6,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-public class UserUpstreamPair {
+final public class UserUpstreamPair {
     @XmlAttribute
     public String user;
     @XmlElement
