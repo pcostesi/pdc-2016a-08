@@ -20,10 +20,10 @@ public class GetDefaultMappingCommand implements Command {
     @Override
     public String execute(final String... params) throws CommandException {
         final UserMapping mapping = configurator.getUserMapping();
-        if (params.length != 0) {
-            throw new CommandException("Invalid number of arguments: " + params.length);
-        }
         final Upstream u = mapping.getDefaultUpstream();
+        if (u == null) {
+            throw new CommandException("Default mapping not set.");
+        }
         return String.format("%s:%s", u.getHost(), u.getPort());
     }
 
