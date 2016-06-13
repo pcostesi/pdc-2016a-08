@@ -3,30 +3,25 @@ package ar.edu.itba.protos.protocol.admin.command;
 import javax.inject.Inject;
 
 import ar.edu.itba.protos.config.ConfigurationLoader;
-import ar.edu.itba.protos.config.Upstream;
 import ar.edu.itba.protos.config.UserMapping;
 import ar.edu.itba.protos.protocol.admin.CommandException;
 
-public class UnMapUserCommand implements Command {
+public class MapDefaultCommand implements Command {
 
     private final ConfigurationLoader configurator;
 
     @Inject
-    public UnMapUserCommand(final ConfigurationLoader configurator) {
+    public MapDefaultCommand(final ConfigurationLoader configurator) {
         this.configurator = configurator;
     }
-
     @Override
     public String execute(final String... params) throws CommandException {
-        if (params.length != 1) {
-            throw new CommandException("Invalid number of parameters: " + params.length);
-        }
-
         final UserMapping mapping = configurator.getUserMapping();
-
-        mapping.unmapUser(params[0]);
-        final Upstream u = mapping.getDefaultUpstream();
-        return String.format("%s -> %s:%s", params[0], u.getHost(), u.getPort());
+        if (params.length != 2) {
+            throw new CommandException("Invalid number of arguments: " + params.length);
+        }
+        mapping.setDefaultUpstream(params[0], Integer.parseInt(params[1]));
+        return String.format("%s:%s", params[0], params[1]);
     }
 
 }

@@ -15,6 +15,8 @@ import ar.edu.itba.protos.protocol.admin.CommandException;
 import ar.edu.itba.protos.protocol.admin.CommandExecutor;
 import ar.edu.itba.protos.protocol.admin.command.Command;
 import ar.edu.itba.protos.protocol.admin.command.GetAllMappingsCommand;
+import ar.edu.itba.protos.protocol.admin.command.GetDefaultMappingCommand;
+import ar.edu.itba.protos.protocol.admin.command.MapDefaultCommand;
 import ar.edu.itba.protos.protocol.admin.command.MapUserCommand;
 import ar.edu.itba.protos.protocol.admin.command.UnMapUserCommand;
 
@@ -43,7 +45,7 @@ public class CommandExecutorTest {
 
     @Test
     public void testUserCanBeMapped() {
-        final UserMapping mapping = Mockito.mock(UserMapping.class);
+        final UserMapping mapping = Mockito.spy(UserMapping.class);
         final ConfigurationLoader mockedConfigurator = Mockito.mock(ConfigurationLoader.class);
         Mockito.when(mockedConfigurator.getUserMapping()).then((i) -> mapping);
 
@@ -57,8 +59,8 @@ public class CommandExecutorTest {
 
     @Test
     public void testUserCanBeUnmapped() {
-        final UserMapping mapping = Mockito.mock(UserMapping.class);
-        mapping.defaultUpstream = new Upstream("example.com", 110);
+        final UserMapping mapping = Mockito.spy(UserMapping.class);
+        mapping.setDefaultUpstream("example.com", 110);
         final ConfigurationLoader mockedConfigurator = Mockito.mock(ConfigurationLoader.class);
         Mockito.when(mockedConfigurator.getUserMapping()).then((i) -> mapping);
 
@@ -72,8 +74,8 @@ public class CommandExecutorTest {
 
     @Test
     public void testWeCanGetMappings() {
-        final UserMapping mapping = Mockito.mock(UserMapping.class);
-        mapping.defaultUpstream = new Upstream("example.com", 110);
+        final UserMapping mapping = Mockito.spy(UserMapping.class);
+        mapping.setDefaultUpstream("example.com", 110);
         Mockito.when(mapping.getAllMappings()).then((i) -> new UserUpstreamPair[] {
                 new UserUpstreamPair("a@localhost", new Upstream("example.com", 111)),
                 new UserUpstreamPair("b@localhost", new Upstream("example.com", 112)),
@@ -91,6 +93,36 @@ public class CommandExecutorTest {
                 "- c@localhost -> example.com:113\r\n" +
                 "- d@localhost -> example.com:114", result);
         Mockito.verify(mapping, Mockito.description("Invalid parameters set"))
-                .getAllMappings();
+        .getAllMappings();
+    }
+
+    @Test
+    public void testWecCanSetADefaultMap() {
+        final UserMapping mapping = Mockito.spy(UserMapping.class);
+        mapping.setDefaultUpstream("example.com", 110);
+
+        final ConfigurationLoader mockedConfigurator = Mockito.mock(ConfigurationLoader.class);
+        Mockito.when(mockedConfigurator.getUserMapping()).then((i) -> mapping);
+
+        final Command command = new MapDefaultCommand(mockedConfigurator);
+        final String result = command.execute("example.co.uk", "110");
+
+        assertEquals("example.co.uk:110", result);
+        Mockito.verify(mapping).setDefaultUpstream("example.co.uk", 110);
+    }
+
+    @Test
+    public void testWecCanGetTheDefaultMapping() {
+        final UserMapping mapping = Mockito.spy(UserMapping.class);
+        mapping.setDefaultUpstream("example.com", 110);
+
+        final ConfigurationLoader mockedConfigurator = Mockito.mock(ConfigurationLoader.class);
+        Mockito.when(mockedConfigurator.getUserMapping()).then((i) -> mapping);
+
+        final Command command = new GetDefaultMappingCommand(mockedConfigurator);
+        final String result = command.execute();
+
+        assertEquals("example.com:110", result);
+        Mockito.verify(mapping).getDefaultUpstream();
     }
 }
