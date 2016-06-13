@@ -3,10 +3,17 @@ package ar.edu.itba.protos.transport.concrete;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ar.edu.itba.protos.protocol.admin.AdminProtocolParser;
+import ar.edu.itba.protos.protocol.admin.CommandExecutor;
 import ar.edu.itba.protos.transport.reactor.Event;
 import ar.edu.itba.protos.transport.support.Attachment;
 import ar.edu.itba.protos.transport.support.Interceptor;
@@ -23,6 +30,15 @@ public final class AdminAttachment extends Attachment implements Interceptor {
 
     // El buffer de entrada y salida:
     private final ByteBuffer ioBuffer = ByteBuffer.allocate(AdminAttachmentFactory.BUFFER_SIZE);
+    private final CommandExecutor executor;
+    private final AdminProtocolParser parser;
+    private final List<String> outboundResults = new ArrayList<>();
+
+    @Inject
+    public AdminAttachment(final CommandExecutor executor, final AdminProtocolParser parser) {
+        this.executor = executor;
+        this.parser = parser;
+    }
 
     @Override
     public ByteBuffer getInboundBuffer() {
@@ -59,6 +75,11 @@ public final class AdminAttachment extends Attachment implements Interceptor {
      */
     @Override
     public void consume(final ByteBuffer buffer) {
+        final List<String[]> commands = parser.parse(buffer);
+        final List<String> results = commands.parallelStream()
+                .map(executor::execute)
+                .collect(Collectors.toList());
+        outboundResults.addAll(results);
 
     }
 }

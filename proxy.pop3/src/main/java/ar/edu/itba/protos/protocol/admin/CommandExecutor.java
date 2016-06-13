@@ -8,7 +8,11 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import ar.edu.itba.protos.protocol.admin.command.Command;
+import ar.edu.itba.protos.protocol.admin.command.GetAllMappingsCommand;
+import ar.edu.itba.protos.protocol.admin.command.GetDefaultMappingCommand;
+import ar.edu.itba.protos.protocol.admin.command.MapDefaultCommand;
 import ar.edu.itba.protos.protocol.admin.command.MapUserCommand;
+import ar.edu.itba.protos.protocol.admin.command.UnMapUserCommand;
 
 @Singleton
 public class CommandExecutor {
@@ -20,8 +24,15 @@ public class CommandExecutor {
     }
 
     @Inject
-    public CommandExecutor(final MapUserCommand mapUser) {
-        commands.put(AdminProtocolToken.MAP_USER, mapUser);
+    protected CommandExecutor(final MapUserCommand mapUser, final UnMapUserCommand unmapUser,
+            final GetAllMappingsCommand getAllMappings, final GetDefaultMappingCommand getDefaultMapping,
+            final MapDefaultCommand setDefaultMapping) {
+
+        bindCommand(AdminProtocolToken.MAP_USER, mapUser);
+        bindCommand(AdminProtocolToken.UNMAP_USER, unmapUser);
+        bindCommand(AdminProtocolToken.GET_ALL_MAPPINGS, getAllMappings);
+        bindCommand(AdminProtocolToken.SET_DEFAULT_MAPPING, setDefaultMapping);
+        bindCommand(AdminProtocolToken.GET_DEFAULT_MAPPING, getDefaultMapping);
     }
 
     public void bindCommand(final AdminProtocolToken symbol, final Command cmd) {
