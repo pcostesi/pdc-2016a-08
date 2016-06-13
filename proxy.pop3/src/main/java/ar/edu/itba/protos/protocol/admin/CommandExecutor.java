@@ -7,8 +7,8 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import ar.edu.itba.protos.config.ConfigurationLoader;
-import ar.edu.itba.protos.config.UserMapping;
+import ar.edu.itba.protos.protocol.admin.command.Command;
+import ar.edu.itba.protos.protocol.admin.command.MapUserCommand;
 
 @Singleton
 public class CommandExecutor {
@@ -16,22 +16,20 @@ public class CommandExecutor {
     public final static String EMPTY_CMD = "Empty command.";
     public final static String NO_SUCH_CMD = "No such command.";
 
-    protected ConfigurationLoader configurator;
+    public CommandExecutor() {
+    }
 
     @Inject
-    public CommandExecutor(final ConfigurationLoader configurator) {
-        this.configurator = configurator;
+    public CommandExecutor(final MapUserCommand mapUser) {
+        commands.put(AdminProtocolToken.MAP_USER, mapUser);
+    }
 
-        commands.put(AdminProtocolToken.MAP_USER, (params) -> {
-            if (params.length != 3) {
-                throw new CommandException("Invalid number of parameters: " + params.length);
-            }
+    public void bindCommand(final AdminProtocolToken symbol, final Command cmd) {
+        commands.put(symbol, cmd);
+    }
 
-            final UserMapping mapping = configurator.getUserMapping();
-
-            mapping.mapUserToUpstream(params[0], params[1], Integer.parseInt(params[2]));
-            return String.format("%s -> %s:%s", params[0], params[1], params[2]);
-        });
+    public Command unbindCommand(final AdminProtocolToken symbol) {
+        return commands.remove(symbol);
     }
 
     public String execute(final String... line) {
