@@ -1,152 +1,165 @@
 
-	package ar.edu.itba.protos.transport.handler;
+package ar.edu.itba.protos.transport.handler;
 
-	import java.io.IOException;
-	import java.nio.ByteBuffer;
-	import java.nio.channels.SelectionKey;
-	import java.nio.channels.SocketChannel;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
 
-	import com.google.inject.Inject;
-	import com.google.inject.Singleton;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
-	import ar.edu.itba.protos.transport.reactor.Event;
-	import ar.edu.itba.protos.transport.reactor.Handler;
-	import ar.edu.itba.protos.transport.support.Attachment;
-	import ar.edu.itba.protos.transport.support.Synchronizer;
+import ar.edu.itba.protos.transport.metrics.Metrics;
+import ar.edu.itba.protos.transport.reactor.Event;
+import ar.edu.itba.protos.transport.reactor.Handler;
+import ar.edu.itba.protos.transport.support.Attachment;
+import ar.edu.itba.protos.transport.support.Synchronizer;
 
-		/**
-		* <p>Este <i>handler</i> es el encargado de forwardear la información
-		* a través de los circuitos establecidos. En primer lugar,
-		* recibe la información del cliente, y la envía hacia el servidor
-		* origen. En segundo lugar, envía las respuestas de este último
-		* devuelta al cliente. Además, se encarga de gestionar las
-		* situaciones de error.</p>
-		*
-		* <p>Esta clase es <b>thread-safe</b>.</p>
-		*/
+/**
+ * <p>Este <i>handler</i> es el encargado de forwardear la información
+ * a través de los circuitos establecidos. En primer lugar,
+ * recibe la información del cliente, y la envía hacia el servidor
+ * origen. En segundo lugar, envía las respuestas de este último
+ * devuelta al cliente. Además, se encarga de gestionar las
+ * situaciones de error.</p>
+ *
+ * <p>Esta clase es <b>thread-safe</b>.</p>
+ */
 
-	@Singleton
-	public final class WriteHandler implements Handler {
+@Singleton
+public final class WriteHandler implements Handler {
 
-		// Repositorio global de claves:
-		private final Synchronizer sync;
+    // Repositorio global de claves:
+    private final Synchronizer sync;
+    private final Metrics metrics;
 
-		@Inject
-		private WriteHandler(final Synchronizer sync) {
+    @Inject
+    private WriteHandler(final Synchronizer sync, final Metrics metrics) {
+        this.metrics = metrics;
+        this.sync = sync;
+    }
 
-			this.sync = sync;
-		}
+    /**
+     * <p>En caso de que la clave posea un forwarder,
+     * almacena el estado del mismo en el repositorio de
+     * claves, siempre y cuando el downstream y el upstream
+     * no representen el mismo canal.</p>
+     *
+     * @param key
+     *	La clave a procesar.
+     */
 
-		/**
-		* <p>En caso de que la clave posea un forwarder,
-		* almacena el estado del mismo en el repositorio de
-		* claves, siempre y cuando el downstream y el upstream
-		* no representen el mismo canal.</p>
-		*
-		* @param key
-		*	La clave a procesar.
-		*/
+    @Override
+    public void onSubmit(final SelectionKey key) {
 
-		public void onSubmit(SelectionKey key) {
+        final SelectionKey upstream
+        = ((Attachment) key.attachment()).getUpstream();
 
-			SelectionKey upstream
-				= ((Attachment) key.attachment()).getUpstream();
+        if (key != upstream && upstream != null) {
+            sync.save(upstream);
+        }
+    }
 
-			if (key != upstream && upstream != null)
-				sync.save(upstream);
-		}
+    /**
+     * <p>Recupera el estado del canal de forwarding, en caso
+     * de que exista uno. El canal downstream es recuperado
+     * automáticamente por el núcleo de procesamiento.</p>
+     *
+     * @param key
+     *	La clave a procesar.
+     */
 
-		/**
-		* <p>Recupera el estado del canal de forwarding, en caso
-		* de que exista uno. El canal downstream es recuperado
-		* automáticamente por el núcleo de procesamiento.</p>
-		*
-		* @param key
-		*	La clave a procesar.
-		*/
+    @Override
+    public void onResume(final SelectionKey key) {
 
-		public void onResume(SelectionKey key) {
+        final SelectionKey upstream
+        = ((Attachment) key.attachment()).getUpstream();
 
-			SelectionKey upstream
-				= ((Attachment) key.attachment()).getUpstream();
+        if (key != upstream && upstream != null) {
+            sync.restore(key, upstream);
+        } else {
+            sync.restore(key);
+        }
+    }
 
-			if (key != upstream && upstream != null)
-				sync.restore(key, upstream);
+    /**
+     * <p>Su función es enviar los datos (escribir) por el canal
+     * especificado. Debido a que la información se procesa durante
+     * una lectura, este método no realiza ninguna verificación
+     * sobre el flujo de bytes saliente. Adicionalmente, actualiza
+     * el estado de las claves que utiliza en el repositorio global.</p>
+     *
+     * @param key
+     *	La clave a procesar, en la cual se activó el
+     *	evento <b>WRITE</b>.
+     */
 
-			else sync.restore(key);
-		}
+    @Override
+    public void handle(final SelectionKey key) {
 
-		/**
-		* <p>Su función es enviar los datos (escribir) por el canal
-		* especificado. Debido a que la información se procesa durante
-		* una lectura, este método no realiza ninguna verificación
-		* sobre el flujo de bytes saliente. Adicionalmente, actualiza
-		* el estado de las claves que utiliza en el repositorio global.</p>
-		*
-		* @param key
-		*	La clave a procesar, en la cual se activó el
-		*	evento <b>WRITE</b>.
-		*/
+        final Attachment attachment = (Attachment) key.attachment();
+        final ByteBuffer buffer = attachment.getOutboundBuffer();
+        final SocketChannel socket = attachment.getSocket();
 
-		public void handle(SelectionKey key) {
+        // El buffer estaba lleno?
+        boolean full = false;
 
-			Attachment attachment = (Attachment) key.attachment();
-			ByteBuffer buffer = attachment.getOutboundBuffer();
-			SocketChannel socket = attachment.getSocket();
+        try {
 
-			// El buffer estaba lleno?
-			boolean full = false;
+            // Si no hay espacio, hay que rehabilitar la lectura:
+            if (buffer.position() == buffer.limit()) {
+                full = true;
+            }
 
-			try {
+            // Veo qué hay para enviar:
+            buffer.flip();
 
-				// Si no hay espacio, hay que rehabilitar la lectura:
-				if (buffer.position() == buffer.limit()) full = true;
+            // Enviar un flujo de datos:
+            final int written = socket.write(buffer);
+            metrics.logBytesSent(attachment, (long) written);
 
-				// Veo qué hay para enviar:
-				buffer.flip();
+            // Si se envió todo el flujo, deshabilitar escritura:
+            if (!attachment.hasOutboundData()) {
+                sync.disable(key, Event.WRITE);
+            }
 
-				// Enviar un flujo de datos:
-				int written = socket.write(buffer);
+            // Si logró enviar datos y estaba lleno, habilito lectura:
+            if (0 < written && full) {
+                sync.enable(key, Event.READ);
+            }
+        }
+        catch (final IOException exception) {
 
-				// Si se envió todo el flujo, deshabilitar escritura:
-				if (!attachment.hasOutboundData())
-					sync.disable(key, Event.WRITE);
+            // Elimino la clave del repositorio:
+            sync.disable(key, Event.WRITE);
 
-				// Si logró enviar datos y estaba lleno, habilito lectura:
-				if (0 < written && full)
-					sync.enable(key, Event.READ);
-			}
-			catch (IOException exception) {
+            // Desconecto el 'downstream':
+            attachment.onUnplug(Event.WRITE);
 
-				// Elimino la clave del repositorio:
-				sync.disable(key, Event.WRITE);
+            // Si hay información para enviar, abro el 'upstream':
+            detectInbound(attachment);
+        }
+    }
 
-				// Desconecto el 'downstream':
-				attachment.onUnplug(Event.WRITE);
+    /**
+     * <p>En caso de que el <i>attachment</i> posea información
+     * disponible para enviar (en el buffer <i>inbound</i>),
+     * habilita el canal de escritura en el <i>upstream</i>.</p>
+     *
+     * @param attachment
+     *	El <i>attachment</i> asociado a la clave procesada, el cual
+     *	determina el estado de los buffers internos.
+     */
 
-				// Si hay información para enviar, abro el 'upstream':
-				detectInbound(attachment);
-			}
-		}
+    private void detectInbound(final Attachment attachment) {
 
-		/**
-		* <p>En caso de que el <i>attachment</i> posea información
-		* disponible para enviar (en el buffer <i>inbound</i>),
-		* habilita el canal de escritura en el <i>upstream</i>.</p>
-		*
-		* @param attachment
-		*	El <i>attachment</i> asociado a la clave procesada, el cual
-		*	determina el estado de los buffers internos.
-		*/
+        if (attachment.hasInboundData()) {
 
-		private void detectInbound(Attachment attachment) {
+            final SelectionKey upstream = attachment.getUpstream();
 
-			if (attachment.hasInboundData()) {
-
-				SelectionKey upstream = attachment.getUpstream();
-
-				if (upstream != null)
-					sync.enable(upstream, Event.WRITE);
-			}
-		}
-	}
+            if (upstream != null) {
+                sync.enable(upstream, Event.WRITE);
+            }
+        }
+    }
+}

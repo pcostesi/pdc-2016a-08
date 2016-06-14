@@ -19,6 +19,7 @@ import ar.edu.itba.protos.protocol.admin.AdminProtocolParser;
 import ar.edu.itba.protos.protocol.admin.AdminProtocolToken;
 import ar.edu.itba.protos.protocol.admin.CommandExecutor;
 import ar.edu.itba.protos.protocol.admin.command.CommandResult;
+import ar.edu.itba.protos.transport.metrics.Metrics;
 import ar.edu.itba.protos.transport.reactor.Event;
 import ar.edu.itba.protos.transport.support.Attachment;
 import ar.edu.itba.protos.transport.support.Interceptor;
@@ -40,11 +41,13 @@ public final class AdminAttachment extends Attachment implements Interceptor {
     private final Deque<ByteBuffer> outboundResults = new LinkedList<>();
     private int starterPosition = 0;
     private boolean hasQuit = false;
+    private final Metrics metrics;
 
     @Inject
-    public AdminAttachment(final CommandExecutor executor, final AdminProtocolParser parser) {
+    public AdminAttachment(final CommandExecutor executor, final AdminProtocolParser parser, final Metrics metrics) {
         this.executor = executor;
         this.parser = parser;
+        this.metrics = metrics;
     }
 
     @Override
@@ -140,6 +143,7 @@ public final class AdminAttachment extends Attachment implements Interceptor {
         final List<ByteBuffer> results = commands.stream()
                 .filter(this::whileNotQuit)
                 .map(executor::execute)
+                .peek(action -> metrics.logExecutedCommands(this))
                 .map(AdminAttachment::serializeResult)
                 .collect(Collectors.toList());
         outboundResults.addAll(results);

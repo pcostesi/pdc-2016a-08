@@ -9,6 +9,7 @@ import ar.edu.itba.protos.transport.handler.AcceptHandler;
 import ar.edu.itba.protos.transport.handler.ConnectHandler;
 import ar.edu.itba.protos.transport.handler.ReadHandler;
 import ar.edu.itba.protos.transport.handler.WriteHandler;
+import ar.edu.itba.protos.transport.metrics.Metrics;
 import ar.edu.itba.protos.transport.reactor.Reactor;
 import ar.edu.itba.protos.transport.support.Server;
 import ar.edu.itba.protos.transport.support.Synchronizer;
@@ -25,6 +26,7 @@ public class DIModule extends AbstractModule {
     protected void configure() {
         bind(POP3Server.class);
         bind(Server.class);
+        bind(Metrics.class);
         bind(Reactor.class);
         bind(AdminProtocolParser.class);
         bind(CommandExecutor.class);
