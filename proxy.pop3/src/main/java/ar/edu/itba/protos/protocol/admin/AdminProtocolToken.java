@@ -12,6 +12,7 @@ public enum AdminProtocolToken {
     GET_DEFAULT_MAPPING("map-default?"),
     SET_DEFAULT_MAPPING("map-default", "host", "port"),
     GET_ALL_MAPPINGS("map-all?"),
+    QUIT("quit"),
     SAVE_MAPPINGS("save-mappings");
 
 

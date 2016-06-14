@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ar.edu.itba.protos.protocol.admin.AdminProtocolParser;
+import ar.edu.itba.protos.protocol.admin.AdminProtocolToken;
 import ar.edu.itba.protos.protocol.admin.CommandExecutor;
 import ar.edu.itba.protos.protocol.admin.command.CommandResult;
 import ar.edu.itba.protos.transport.reactor.Event;
@@ -38,6 +39,7 @@ public final class AdminAttachment extends Attachment implements Interceptor {
     private final AdminProtocolParser parser;
     private final Deque<ByteBuffer> outboundResults = new LinkedList<>();
     private int starterPosition = 0;
+    private boolean hasQuit = false;
 
     @Inject
     public AdminAttachment(final CommandExecutor executor, final AdminProtocolParser parser) {
@@ -121,6 +123,10 @@ public final class AdminAttachment extends Attachment implements Interceptor {
         return commands;
     }
 
+    private boolean whileNotQuit(final String[] params) {
+        hasQuit = hasQuit || (params.length == 1 && AdminProtocolToken.isCommand(params[0]) == AdminProtocolToken.QUIT);
+        return !hasQuit;
+    }
 
     /*
      ** Este método se ejecuta cada vez que un nuevo flujo de bytes se presenta
@@ -132,9 +138,14 @@ public final class AdminAttachment extends Attachment implements Interceptor {
     public void consume(final ByteBuffer buffer) {
         final List<String[]> commands = parseBuffer(buffer);
         final List<ByteBuffer> results = commands.stream()
+                .filter(this::whileNotQuit)
                 .map(executor::execute)
                 .map(AdminAttachment::serializeResult)
                 .collect(Collectors.toList());
         outboundResults.addAll(results);
+        if (hasQuit) {
+            closeDownstream();
+            closeUpstream();
+        }
     }
 }

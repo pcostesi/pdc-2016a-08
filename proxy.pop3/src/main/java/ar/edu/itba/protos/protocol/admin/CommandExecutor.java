@@ -14,6 +14,7 @@ import ar.edu.itba.protos.protocol.admin.command.Command;
 import ar.edu.itba.protos.protocol.admin.command.CommandResult;
 import ar.edu.itba.protos.protocol.admin.command.GetAllMappingsCommand;
 import ar.edu.itba.protos.protocol.admin.command.GetDefaultMappingCommand;
+import ar.edu.itba.protos.protocol.admin.command.GetUserMappingCommand;
 import ar.edu.itba.protos.protocol.admin.command.MapDefaultCommand;
 import ar.edu.itba.protos.protocol.admin.command.MapUserCommand;
 import ar.edu.itba.protos.protocol.admin.command.UnMapUserCommand;
@@ -31,13 +32,14 @@ public class CommandExecutor {
     @Inject
     protected CommandExecutor(final MapUserCommand mapUser, final UnMapUserCommand unmapUser,
             final GetAllMappingsCommand getAllMappings, final GetDefaultMappingCommand getDefaultMapping,
-            final MapDefaultCommand setDefaultMapping) {
+            final MapDefaultCommand setDefaultMapping, final GetUserMappingCommand getMappingForUser) {
 
         bindCommand(AdminProtocolToken.MAP_USER, mapUser);
         bindCommand(AdminProtocolToken.UNMAP_USER, unmapUser);
         bindCommand(AdminProtocolToken.GET_ALL_MAPPINGS, getAllMappings);
         bindCommand(AdminProtocolToken.SET_DEFAULT_MAPPING, setDefaultMapping);
         bindCommand(AdminProtocolToken.GET_DEFAULT_MAPPING, getDefaultMapping);
+        bindCommand(AdminProtocolToken.GET_MAPPING_FOR_USER, getMappingForUser);
     }
 
     public void bindCommand(final AdminProtocolToken symbol, final Command cmd) {
