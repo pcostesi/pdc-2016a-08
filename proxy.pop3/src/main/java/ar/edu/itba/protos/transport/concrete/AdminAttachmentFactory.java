@@ -6,6 +6,7 @@ import javax.inject.Singleton;
 
 import ar.edu.itba.protos.protocol.admin.AdminProtocolParser;
 import ar.edu.itba.protos.protocol.admin.CommandExecutor;
+import ar.edu.itba.protos.transport.metrics.Metrics;
 import ar.edu.itba.protos.transport.support.Attachment;
 import ar.edu.itba.protos.transport.support.AttachmentFactory;
 
@@ -23,10 +24,12 @@ public final class AdminAttachmentFactory implements AttachmentFactory {
     // TODO: Debería obtenerse por configuración:
     public static final int BUFFER_SIZE = 8192;
     private final CommandExecutor executor;
+    private final Metrics metrics;
 
     @Inject
-    public AdminAttachmentFactory(final CommandExecutor executor) {
+    public AdminAttachmentFactory(final CommandExecutor executor, final Metrics metrics) {
         this.executor = executor;
+        this.metrics = metrics;
     }
 
     /**
@@ -38,6 +41,6 @@ public final class AdminAttachmentFactory implements AttachmentFactory {
      */
     @Override
     public Attachment create() {
-        return new AdminAttachment(executor, new AdminProtocolParser());
+        return new AdminAttachment(executor, new AdminProtocolParser(), metrics);
     }
 }

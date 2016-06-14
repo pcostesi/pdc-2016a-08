@@ -34,7 +34,6 @@ public class App {
     private static void initializeUserMapping() {
         try {
             configurator.loadUserMapping("mapping.xml");
-            logger.debug("{}", configurator.getUserMapping());
         } catch (final JAXBException e) {
             logger.error("Invalid proxy mapping file", e);
             System.exit(MAPPING_ERR);
