@@ -27,10 +27,15 @@ public enum AdminProtocolToken {
         return Arrays.copyOf(params, params.length);
     }
 
-    public static AdminProtocolToken isCommand(final String token) {
+    public static AdminProtocolToken isCommand(final String needle) {
         return Arrays.stream(AdminProtocolToken.values())
-                .filter(c -> c.token.toLowerCase().equals(token.toLowerCase()))
+                .filter(c -> c.token.equalsIgnoreCase(needle))
                 .findFirst()
                 .orElse(ERR);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s (%s)", this.name(), this.token);
     }
 }

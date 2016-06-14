@@ -19,7 +19,6 @@ import ar.edu.itba.protos.transport.handler.ReadHandler;
 import ar.edu.itba.protos.transport.handler.WriteHandler;
 import ar.edu.itba.protos.transport.reactor.Event;
 import ar.edu.itba.protos.transport.reactor.Reactor;
-import ar.edu.itba.protos.transport.support.AttachmentFactory;
 import ar.edu.itba.protos.transport.support.Message;
 import ar.edu.itba.protos.transport.support.Server;
 
@@ -35,6 +34,9 @@ public final class POP3Server {
     private final Reactor demultiplexor;
     private final Server pop3;
     private final ConfigurationLoader configurator;
+    private final AdminAttachmentFactory adminFactory;
+    private final TestAttachmentFactory testFactory;
+    private final ForwardAttachmentFactory forwardFactory;
 
     // Handler injections:
     @Inject private AcceptHandler acceptHandler;
@@ -43,31 +45,28 @@ public final class POP3Server {
     @Inject private ConnectHandler connectHandler;
 
     @Inject
-    private POP3Server(final Reactor demultiplexor, final Server pop3, final ConfigurationLoader configurator) {
+    private POP3Server(final Reactor demultiplexor, final Server pop3, final ConfigurationLoader configurator,
+            final AdminAttachmentFactory adminFactory, final TestAttachmentFactory testFactory,
+            final ForwardAttachmentFactory forwardFactory) {
         this.demultiplexor = demultiplexor;
         this.pop3 = pop3;
         this.configurator = configurator;
+        this.adminFactory = adminFactory;
+        this.testFactory = testFactory;
+        this.forwardFactory = forwardFactory;
     }
 
     public void run() throws IOException {
 
         final ProxyConfiguration config = configurator.getProxyConfig();
         /*
-         ** Fábricas de 'attachments'. Cada servidor puede tener una fábrica
-         * distinta en cada puerto de escucha (es decir, en cada 'listener'):
-         */
-        final AttachmentFactory forwardFactory = new ForwardAttachmentFactory();
-
-        final AttachmentFactory adminFactory = new AdminAttachmentFactory();
-
-        /*
          ** Se instalan los manejadores (Handlers) en el demultiplexador de
          * eventos global:
          */
         demultiplexor.add(acceptHandler, Event.ACCEPT)
-                .add(readHandler, Event.READ)
-                .add(writeHandler, Event.WRITE)
-                .add(connectHandler, Event.CONNECT);
+        .add(readHandler, Event.READ)
+        .add(writeHandler, Event.WRITE)
+        .add(connectHandler, Event.CONNECT);
 
         /*
          ** Se instancia un nuevo servidor y se aplica un 'binding' en cada
@@ -75,7 +74,7 @@ public final class POP3Server {
          */
         pop3.addListener(config.getListenAddr(), config.getListenPort(), forwardFactory)
         .addListener(config.getAdminListenAddr(), config.getAdminListenPort(), adminFactory)
-        .addListener("0.0.0.0", 60000, new TestAttachmentFactory());
+        .addListener("0.0.0.0", 60000, testFactory);
 
         try {
 

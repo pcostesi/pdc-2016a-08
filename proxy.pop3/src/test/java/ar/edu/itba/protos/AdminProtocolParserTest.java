@@ -116,6 +116,7 @@ public class AdminProtocolParserTest extends TestCase {
         assertTrue(parsedLines.get(0) != null);
         assertTrue(parsedLines.get(0).length == 4);
 
+        commandBuffer.compact();
         commandBuffer.put("ser\r\n".getBytes());
         commandBuffer.flip();
 
@@ -124,6 +125,7 @@ public class AdminProtocolParserTest extends TestCase {
         assertTrue(parsedLinesAgain.get(0) != null);
         assertTrue(parsedLinesAgain.get(0).length == 2);
 
+        commandBuffer.compact();
         commandBuffer.put("map?\r\n".getBytes());
         commandBuffer.flip();
 

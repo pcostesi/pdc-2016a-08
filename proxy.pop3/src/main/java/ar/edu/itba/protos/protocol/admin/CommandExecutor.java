@@ -7,6 +7,9 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ar.edu.itba.protos.protocol.admin.command.Command;
 import ar.edu.itba.protos.protocol.admin.command.CommandResult;
 import ar.edu.itba.protos.protocol.admin.command.GetAllMappingsCommand;
@@ -17,6 +20,7 @@ import ar.edu.itba.protos.protocol.admin.command.UnMapUserCommand;
 
 @Singleton
 public class CommandExecutor {
+    private final static Logger logger = LoggerFactory.getLogger(CommandExecutor.class);
     private final static Map<AdminProtocolToken, Command> commands = new HashMap<>();
     public final static String EMPTY_CMD = "Empty command.";
     public final static String NO_SUCH_CMD = "No such command.";
@@ -37,6 +41,7 @@ public class CommandExecutor {
     }
 
     public void bindCommand(final AdminProtocolToken symbol, final Command cmd) {
+        logger.debug("Binding command {} to function {}", symbol.toString(), cmd);
         commands.put(symbol, cmd);
     }
 
@@ -60,6 +65,7 @@ public class CommandExecutor {
 
         final Command cmd = commands.get(symbol);
         if (cmd == null) {
+            logger.debug("Could not find command: <{}>", line[0]);
             return CommandResult.err(NO_SUCH_CMD);
         }
         return CommandResult.wrap(cmd, params);

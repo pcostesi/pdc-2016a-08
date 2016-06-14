@@ -1,9 +1,11 @@
 
 package ar.edu.itba.protos.transport.concrete;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
+import ar.edu.itba.protos.protocol.admin.AdminProtocolParser;
+import ar.edu.itba.protos.protocol.admin.CommandExecutor;
 import ar.edu.itba.protos.transport.support.Attachment;
 import ar.edu.itba.protos.transport.support.AttachmentFactory;
 
@@ -15,11 +17,18 @@ import ar.edu.itba.protos.transport.support.AttachmentFactory;
  * las estadísticas y métricas del estado actual del sistema.</p>
  */
 
+@Singleton
 public final class AdminAttachmentFactory implements AttachmentFactory {
 
     // TODO: Debería obtenerse por configuración:
     public static final int BUFFER_SIZE = 8192;
-    private final Injector injector = Guice.createInjector();
+    private final CommandExecutor executor;
+
+    @Inject
+    public AdminAttachmentFactory(final CommandExecutor executor) {
+        this.executor = executor;
+    }
+
     /**
      * <p>Genera un nuevo <i>attachment</i> de administración.</p>
      *
@@ -29,6 +38,6 @@ public final class AdminAttachmentFactory implements AttachmentFactory {
      */
     @Override
     public Attachment create() {
-        return injector.getInstance(AdminAttachment.class);
+        return new AdminAttachment(executor, new AdminProtocolParser());
     }
 }

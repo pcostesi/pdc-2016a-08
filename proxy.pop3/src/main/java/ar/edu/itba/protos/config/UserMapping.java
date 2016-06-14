@@ -1,7 +1,9 @@
 package ar.edu.itba.protos.config;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -54,4 +56,11 @@ public class UserMapping {
         return defaultUpstream;
     }
 
+    @Override
+    public String toString() {
+        return String.format("(default) %s", getDefaultUpstream()) +
+                Arrays.stream(getAllMappings())
+                        .map(p -> "- " + p.toString())
+                        .collect(Collectors.joining("\n"));
+    }
 }
