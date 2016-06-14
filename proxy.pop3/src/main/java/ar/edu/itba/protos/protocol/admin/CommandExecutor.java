@@ -14,10 +14,17 @@ import ar.edu.itba.protos.protocol.admin.command.Command;
 import ar.edu.itba.protos.protocol.admin.command.CommandResult;
 import ar.edu.itba.protos.protocol.admin.command.GetAllMappingsCommand;
 import ar.edu.itba.protos.protocol.admin.command.GetDefaultMappingCommand;
+import ar.edu.itba.protos.protocol.admin.command.GetFiltersStatusCommand;
 import ar.edu.itba.protos.protocol.admin.command.GetUserMappingCommand;
+import ar.edu.itba.protos.protocol.admin.command.HelpCommand;
 import ar.edu.itba.protos.protocol.admin.command.MapDefaultCommand;
 import ar.edu.itba.protos.protocol.admin.command.MapUserCommand;
+import ar.edu.itba.protos.protocol.admin.command.ReportCommand;
+import ar.edu.itba.protos.protocol.admin.command.SaveMappingsCommand;
+import ar.edu.itba.protos.protocol.admin.command.SetFilterCommand;
+import ar.edu.itba.protos.protocol.admin.command.ShutdownCommand;
 import ar.edu.itba.protos.protocol.admin.command.UnMapUserCommand;
+import ar.edu.itba.protos.protocol.admin.command.UnsetFilterCommand;
 
 @Singleton
 public class CommandExecutor {
@@ -32,7 +39,10 @@ public class CommandExecutor {
     @Inject
     protected CommandExecutor(final MapUserCommand mapUser, final UnMapUserCommand unmapUser,
             final GetAllMappingsCommand getAllMappings, final GetDefaultMappingCommand getDefaultMapping,
-            final MapDefaultCommand setDefaultMapping, final GetUserMappingCommand getMappingForUser) {
+            final MapDefaultCommand setDefaultMapping, final GetUserMappingCommand getMappingForUser,
+            final SaveMappingsCommand saveMappings, final ReportCommand report,
+            final HelpCommand help, final ShutdownCommand shutdown, final SetFilterCommand setFilter,
+            final UnsetFilterCommand unsetFilter, final GetFiltersStatusCommand filterStatus) {
 
         bindCommand(AdminProtocolToken.MAP_USER, mapUser);
         bindCommand(AdminProtocolToken.UNMAP_USER, unmapUser);
@@ -40,6 +50,13 @@ public class CommandExecutor {
         bindCommand(AdminProtocolToken.SET_DEFAULT_MAPPING, setDefaultMapping);
         bindCommand(AdminProtocolToken.GET_DEFAULT_MAPPING, getDefaultMapping);
         bindCommand(AdminProtocolToken.GET_MAPPING_FOR_USER, getMappingForUser);
+        bindCommand(AdminProtocolToken.SAVE_MAPPINGS, saveMappings);
+        bindCommand(AdminProtocolToken.SHOW_STATS_REPORT, report);
+        bindCommand(AdminProtocolToken.HELP, help);
+        bindCommand(AdminProtocolToken.SHUTDOWN, shutdown);
+        bindCommand(AdminProtocolToken.SET_FILTER, setFilter);
+        bindCommand(AdminProtocolToken.UNSET_FILTER, unsetFilter);
+        bindCommand(AdminProtocolToken.GET_ACTIVE_FILTERS, filterStatus);
     }
 
     public void bindCommand(final AdminProtocolToken symbol, final Command cmd) {
