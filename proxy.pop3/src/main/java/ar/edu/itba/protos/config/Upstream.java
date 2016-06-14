@@ -36,4 +36,9 @@ public class Upstream {
 
     public Upstream() {
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s:%d", getHost(), getPort());
+    }
 }
