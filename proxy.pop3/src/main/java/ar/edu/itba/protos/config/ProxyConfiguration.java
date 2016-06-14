@@ -4,7 +4,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
-public class ProxyConfiguration {
+public final class ProxyConfiguration {
     private String listenAddr = "0.0.0.0";
     private String adminListenAddr = "127.0.0.1";
     private int listenPort = 1110;

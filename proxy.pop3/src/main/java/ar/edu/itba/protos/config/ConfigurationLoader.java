@@ -16,10 +16,10 @@ import javax.xml.bind.Unmarshaller;
 
 @Singleton
 public class ConfigurationLoader {
-    private static ProxyConfiguration proxyConfig = new ProxyConfiguration();
-    private static UserMapping userMapping = new UserMapping();
+    private ProxyConfiguration proxyConfig = new ProxyConfiguration();
+    private UserMapping userMapping = new UserMapping();
 
-    public static ProxyConfiguration loadProxyConfig(final String filename) throws JAXBException {
+    public ProxyConfiguration loadProxyConfig(final String filename) throws JAXBException {
         try {
             proxyConfig = loadResource(filename, ProxyConfiguration.class);
         } catch (final IOException e) {
@@ -27,7 +27,7 @@ public class ConfigurationLoader {
         return proxyConfig;
     }
 
-    public static UserMapping loadUserMapping(final String filename) throws JAXBException {
+    public UserMapping loadUserMapping(final String filename) throws JAXBException {
         try {
             userMapping = loadResource(filename, UserMapping.class);
         } catch (final IOException e) {
@@ -35,32 +35,32 @@ public class ConfigurationLoader {
         return userMapping;
     }
 
-    public static UserMapping getUserMapping() {
+    public UserMapping getUserMapping() {
         return userMapping;
     }
 
-    public static void setUserMapping(final String filename, final UserMapping newMapping)
+    public void setUserMapping(final String filename, final UserMapping newMapping)
             throws IOException, JAXBException {
         saveResource(filename, newMapping);
         userMapping = newMapping;
     }
 
-    public static ProxyConfiguration getProxyConfig() {
+    public ProxyConfiguration getProxyConfig() {
         return proxyConfig;
     }
 
-    public static void setProxyConfig(final String filename, final ProxyConfiguration proxyConfig)
+    public void setProxyConfig(final String filename, final ProxyConfiguration proxyConfig)
             throws IOException, JAXBException {
         saveResource(filename, proxyConfig);
-        ConfigurationLoader.proxyConfig = proxyConfig;
+        this.proxyConfig = proxyConfig;
     }
 
-    public static void setProxyConfig(final String filename) throws IOException, JAXBException {
+    public void setProxyConfig(final String filename) throws IOException, JAXBException {
         setProxyConfig(filename, proxyConfig);
     }
 
 
-    private static <T> void saveResource(final String filename, final T object) throws IOException, JAXBException {
+    private <T> void saveResource(final String filename, final T object) throws IOException, JAXBException {
         final File file = setFile(filename);
         final JAXBContext context = JAXBContext.newInstance(object.getClass());
         final Marshaller marshaller = context.createMarshaller();
@@ -69,7 +69,7 @@ public class ConfigurationLoader {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> T loadResource(final String filename, final Class<T> cls) throws IOException, JAXBException {
+    private <T> T loadResource(final String filename, final Class<T> cls) throws IOException, JAXBException {
         final File file = findFile(filename).orElseThrow(() -> new NoSuchFileException(filename));
         final JAXBContext context = JAXBContext.newInstance(cls);
         final Unmarshaller jaxbUnmarshaller = context.createUnmarshaller();
@@ -82,14 +82,14 @@ public class ConfigurationLoader {
      * @param <T>
      * @throws NoSuchFileException
      */
-    private static Optional<File> findFile(final String configName) {
+    private Optional<File> findFile(final String configName) {
         return Arrays.stream(getConfigPaths(configName))
                 .map(Path::toFile)
                 .filter(File::canRead)
                 .findFirst();
     }
 
-    private static File setFile(final String configName) throws NoSuchFileException {
+    private File setFile(final String configName) throws NoSuchFileException {
         for (final Path p : getConfigPaths(configName)) {
             final File f = p.toFile();
             try {
@@ -102,7 +102,7 @@ public class ConfigurationLoader {
         throw new NoSuchFileException(configName);
     }
 
-    private static Path[] getConfigPaths(final String configName) {
+    private Path[] getConfigPaths(final String configName) {
         return new Path[]{
                 Paths.get(System.getProperty("user.dir"), configName),
                 Paths.get(System.getProperty("user.home"), "." + configName),

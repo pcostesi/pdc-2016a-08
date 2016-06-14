@@ -1,8 +1,9 @@
 package ar.edu.itba.protos.config;
 
+import java.util.Arrays;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -16,13 +17,17 @@ public class UserMapping {
 
     @XmlElement(name = "mappings")
     @XmlJavaTypeAdapter(UserMappingAdapter.class)
-    public Map<String, Upstream> userMappings = new ConcurrentHashMap<>();
+    private final Map<String, Upstream> userMappings = new ConcurrentHashMap<>();
 
     @XmlElement(name = "default-upstream")
-    public Upstream defaultUpstream;
+    private Upstream defaultUpstream;
 
-    public Optional<Upstream> getMappingForUsername(final String username) {
-        return Optional.ofNullable(userMappings.get(username));
+    public Upstream getMappingForUsername(final String username) {
+        final Upstream mapping = userMappings.get(username);
+        if (mapping == null) {
+            return defaultUpstream;
+        }
+        return mapping;
     }
 
     public void mapUserToUpstream(final String username, final Upstream upstream) {
@@ -33,4 +38,29 @@ public class UserMapping {
         userMappings.put(username, new Upstream(host, port));
     }
 
+    public void unmapUser(final String username) {
+        userMappings.remove(username);
+    }
+
+    public UserUpstreamPair[] getAllMappings() {
+        return userMappings.entrySet().stream()
+                .map(e -> new UserUpstreamPair(e.getKey(), e.getValue()))
+                .toArray(i -> new UserUpstreamPair[i]);
+    }
+
+    public void setDefaultUpstream(final String host, final int port) {
+        defaultUpstream = new Upstream(host, port);
+    }
+
+    public Upstream getDefaultUpstream() {
+        return defaultUpstream;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("(default) %s", getDefaultUpstream()) +
+                Arrays.stream(getAllMappings())
+                        .map(p -> "- " + p.toString())
+                        .collect(Collectors.joining("\n"));
+    }
 }

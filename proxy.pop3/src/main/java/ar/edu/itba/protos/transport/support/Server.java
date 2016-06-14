@@ -4,10 +4,11 @@ package ar.edu.itba.protos.transport.support;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.CancelledKeyException;
-import java.nio.channels.Channel;
+import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -21,182 +22,379 @@ import org.slf4j.LoggerFactory;
 import ar.edu.itba.protos.transport.reactor.Reactor;
 
 /**
- * Un servidor recibe conexiones entrantes en las direcciones y puertos
- * especificados, y genera eventos de forma no-bloqueante, los cuales son
- * despachados hacia un demultiplexor (implementado mediante un reactor).
+ * <p>Un servidor recibe conexiones entrantes en las
+ * direcciones y puertos especificados, y genera
+ * eventos de forma no-bloqueante, los cuales son
+ * despachados hacia un demultiplexor (implementado
+ * mediante un reactor). En cada interfaz especificada
+ * se asocia una fábrica de <i>attachments</i>.</p>
  */
 
 public final class Server {
 
-	private static final Logger logger = LoggerFactory.getLogger(Server.class);
+    // TODO: obtener por configuración Pablo!!!
+    /**/private static final long TIMEOUT = 500000;
+    /**/private static final long LAZY_INTERVAL_DETECTION = 1000;
 
-	// TODO: obtener por configuración Pablo!!!
-	private static final long TIMEOUT = 10000;
-	private static final long LAZY_DETECTION_INTERVAL = 1000;
+    // Logger:
+    private static final Logger logger
+    = LoggerFactory.getLogger(Server.class);
 
-	// Watchdog-timer utilizado para cerrar canales inactivos:
-	private final WatchdogTimer watchdog
-		= new WatchdogTimer(TIMEOUT);
+    // Demultiplexador de eventos generados:
+    private final Reactor demultiplexor;
 
-	// Generador de eventos:
-	private Selector selector;
+    // Watchdog-timer utilizado para cerrar canales inactivos:
+    private final WatchdogTimer watchdog;
 
-	// Lista de sockets escuchando conexiones entrantes:
-	private List<ServerSocketChannel> listeners = null;
+    // Lista de sockets escuchando conexiones entrantes:
+    private List<ServerSocketChannel> listeners = null;
 
-	// Demultiplexador de eventos generados:
-	private final Reactor demultiplexor;
+    // Generador de eventos:
+    private Selector selector;
 
-	@Inject
-	public Server(Reactor demultiplexor) {
-		this.demultiplexor = demultiplexor;
-		try {
-			selector = Selector.open();
-			listeners = new ArrayList<ServerSocketChannel>();
-		} catch (IOException exception) {
+    // Indica si el monitor de inactividad está activo:
+    private volatile boolean monitoring = true;
 
-				exception.printStackTrace();
-			}
-		}
+    @Inject
+    public Server(final Reactor demultiplexor, final WatchdogTimer watchdog) {
 
-		/*
-		** Devuelve la cantidad de 'listeners' activos en este servidor.
-		** Cada 'listener' se corresponde con una dirección IP y un puerto
-		** de escucha en la que se reciben conexiones entrantes.
-		*/
+        this.watchdog = watchdog;
+        this.demultiplexor = demultiplexor;
 
-		public int getListeners() {
+        try {
 
-			return listeners.size();
-		}
+            watchdog.setTimeout(TIMEOUT);
+            selector = Selector.open();
+            listeners = new ArrayList<>();
+        }
+        catch (final IOException exception) {
 
-		/*
-		** Agrega una nueva dirección y puerto de escucha para este
-		** servidor. Es importante notar que el nuevo canal de escucha
-		** puede o no poseer un 'attachment'. En caso de que no posea,
-		** debe utilizarse algún mecanismo adicional para diferenciar
-		** en cual de las direcciones se recibió una petición de conexión.
-		** Devuelve 'true' si pudo agregar el canal.
-		*/
+            logger.error(Message.CANNOT_RAISE.getMessage());
+        }
+    }
 
-		public Server addListener(InetSocketAddress address, Object attach)
-				throws IOException {
+    /**
+     * <p>Devuelve la cantidad de <b>listeners</b> activos en este
+     * servidor. Cada <i>listener</i> se corresponde con una dirección
+     * IP y un puerto de escucha en la que se reciben conexiones
+     * entrantes.</p>
+     *
+     * @return La cantidad de interfaces abiertas en las que este
+     * 	servidor está escuchando.
+     */
 
-			logger.debug("Attaching listen socket {} to {}", address, attach);
+    public int getListeners() {
 
-			ServerSocketChannel channel = ServerSocketChannel.open();
-			channel.configureBlocking(false);
-			channel.socket().bind(address);
-			channel.register(selector, SelectionKey.OP_ACCEPT, attach);
+        return listeners.size();
+    }
 
-			listeners.add(channel);
+    /**
+     * <p>Agrega una nueva dirección y puerto de escucha para este
+     * servidor. Es importante notar que el nuevo canal de escucha
+     * puede o no poseer un <i>attachment</i>. En caso de que no posea,
+     * debe utilizarse algún mecanismo adicional para diferenciar
+     * en cuál de las direcciones se recibió una petición de conexión.</p>
+     *
+     * @param address
+     *	La dirección en la cual escuchar conexiones entrantes.
+     * @param factory
+     *	La fábrica de <i>attachments</i>.
+     *
+     * @return El servidor sobre el cual se instalaron las interfaces.
+     */
 
-			return this;
-		}
+    public Server addListener(
+            final InetSocketAddress address,
+            final AttachmentFactory factory) {
 
-		/*
-		** En este caso se agrega una nueva dirección de escucha,
-		** especificando directamente la IP y el puerto en cuestión.
-		** Devuelve 'true' si pudo agregar el canal.
-		*/
+        try {
 
-		public Server addListener(String IP, int port, Object attach)
-				throws IOException {
+            final ServerSocketChannel channel = ServerSocketChannel.open();
+            channel.configureBlocking(false);
+            channel.socket().bind(address);
+            channel.register(selector, SelectionKey.OP_ACCEPT, factory);
+            listeners.add(channel);
+        }
+        catch (final IllegalArgumentException exception) {
 
-			InetSocketAddress address = new InetSocketAddress(IP, port);
-			return addListener(address, attach);
-		}
+            logger.error(
+                    Message.INVALID_ADDRESS.getMessage(),
+                    address);
+        }
+        catch (final IOException exception) {
 
-		/*
-		** Comienza a despachar eventos. Para ello, comienza por
-		** seleccionar los canales que deben ser procesados, y luego
-		** solicita que un manejador adecuado procese dicho evento.
-		*/
+            logger.error(
+                    Message.CANNOT_LISTEN.getMessage(),
+                    address);
+        }
+        return this;
+    }
 
-		public void dispatch() throws IOException {
+    /**
+     * En este caso se agrega una nueva dirección de escucha,
+     * especificando directamente la IP y el puerto en cuestión.
+     *
+     * @param IP
+     *	Dirección IP sobre la cual se recibirán conexiones entrantes.
+     * @param port
+     *	Puerto sobre el cual escuchar.
+     * @param factory
+     *	La fábrica de <i>attachments</i>.
+     *
+     * @return El servidor sobre el cual se instalaron las interfaces.
+     */
 
-			while (true) {
+    public Server addListener(
+            final String IP, final int port,
+            final AttachmentFactory factory) {
 
-				// Cierro todos los canales inactivos:
-				watchdog.killLazyActivities();
+        try {
 
-				if (0 < selector.select(LAZY_DETECTION_INTERVAL)) {
+            final InetSocketAddress address = new InetSocketAddress(IP, port);
+            return addListener(address, factory);
+        }
+        catch (final IllegalArgumentException exception) {
 
-					Set<SelectionKey> keys = selector.selectedKeys();
-					Iterator<SelectionKey> iterator = keys.iterator();
+            logger.error(
+                    Message.INVALID_ADDRESS.getMessage(),
+                    IP + ":" + port);
+        }
+        return this;
+    }
 
-					while (iterator.hasNext()) {
+    /**
+     * <p>Comienza a despachar eventos. Para ello, comienza por
+     * seleccionar los canales que deben ser procesados, y luego
+     * solicita que un manejador adecuado procese dicho evento.</p>
+     *
+     * @throws IOException
+     *	Si ocurre algún error de I/O inesperado.
+     */
 
-						// Obtengo una clave:
-						SelectionKey key = iterator.next();
+    public void dispatch() throws IOException {
 
-						// Si no es un 'listener', actualizo el watchdog:
-						if (!isListener(key)) {
+        logger.info(toString());
 
-							watchdog.removeActivity(key);
-							watchdog.addActivity(key);
-						}
+        // Levanto el monitor de inactividad:
+        runWatchdog();
 
-						// Habría que sacar esto, eventualmente...
-						logger.trace("> Select ({})", key);
+        while (true) {
 
-						// Solicito que un manejador resuelva el evento:
-						demultiplexor.dispatch(key);
+            /* En lugar de usar 'select(TIMEOUT)' (o sin timeout),
+             ** utilizamos 'selectNow()' para evitar 'starvation' entre
+             ** los demás threads, ya que las operaciones sobre el
+             ** selector y las claves son bloqueantes.
+             */
+            if (0 < selector.selectNow()) {
 
-						iterator.remove();
-					}
-				}
-			}
-		}
+                final Set<SelectionKey> keys = selector.selectedKeys();
+                final Iterator<SelectionKey> iterator = keys.iterator();
 
-		/*
-		** Implementa un 'graceful-shutdown' para todas las
-		** direcciones de escucha y para todos los clientes
-		** conectados. Luego de ejecutar este método, se puede
-		** levantar devuelta el servidor, especificando nuevos
-		** 'listeners' y despachando sus eventos.
-		*/
+                while (iterator.hasNext()) {
 
-		public void shutdown() throws IOException {
+                    // Obtengo una clave:
+                    final SelectionKey key = iterator.next();
 
-			Set<SelectionKey> keys = selector.keys();
+                    // Si no es un 'listener', actualizo el watchdog:
+                    if (!isListener(key)) {
+                        watchdog.update(key);
+                    }
 
-			// Cierra el monitoreo de actividades:
-			watchdog.removeAll();
+                    // Solicito que un manejador resuelva el evento:
+                    demultiplexor.dispatch(key);
 
-			// Cierra los canales:
-			for (SelectionKey key : keys) {
+                    // Quito la clave despachada:
+                    iterator.remove();
+                }
+            }
+        }
+    }
 
-				key.cancel();
-				Channel channel = key.channel();
-				if (channel.isOpen()) channel.close();
-			}
+    /**
+     * <p>Implementa un <b>graceful-shutdown</b> para todas las
+     * direcciones de escucha y para todos los clientes
+     * conectados. Luego de ejecutar este método, se puede
+     * levantar devuelta el servidor, especificando nuevos
+     * <i>listeners</i> y despachando sus eventos.</p>
+     *
+     * @throws IOException
+     *	Si ocurre algún error de I/O inesperado.
+     */
 
-			// Cierra los 'listeners':
-			for (ServerSocketChannel listener : listeners) {
+    public void shutdown() throws IOException {
 
-				// En teoría, no es necesario:
-				if (listener.isOpen()) listener.close();
-			}
-			listeners.clear();
+        logger.info(Message.SERVER_SHUTDOWN.getMessage());
 
-			// Cierra el selector:
-			if (selector.isOpen()) selector.close();
-		}
+        final Set<SelectionKey> keys = selector.keys();
 
-		/*
-		** Devuelve 'true' si la clave está activa para el
-		** evento ACCEPT, es decir, que el canal se encuentra
-		** a disposición de conexiones entrantes, tal cual lo
-		** hace un 'ServerSocketChannel' (listener).
-		*/
+        // Cierra el monitoreo de actividades:
+        watchdog.removeAll();
+        monitoring = false;
 
-		private boolean isListener(SelectionKey key) {
+        // Cierra los canales:
+        for (final SelectionKey key : keys) {
+            close(key);
+        }
 
-			try {
-				return 0 != (key.interestOps() & SelectionKey.OP_ACCEPT);
-			} catch (CancelledKeyException exception) {
-				return false;
-			}
-		}
-	}
+        // Cierra los 'listeners':
+        for (final ServerSocketChannel listener : listeners) {
+            close(listener.keyFor(selector));
+        }
+
+        listeners.clear();
+
+        // Cierra el selector:
+        if (selector.isOpen()) {
+            selector.close();
+        }
+    }
+
+    /**
+     * <p>Genera una cadena que representa el estado del servidor,
+     * en la cual se especifican todas las interfaces en las
+     * que se están escuchando conexiones entrantes. Si no puede
+     * determinar las interfaces, devuelve una cadena especial.</p>
+     *
+     * @return Una cadena que representa el estado del servidor.
+     */
+
+    @Override
+    public String toString() {
+
+        try {
+
+            final StringBuilder builder = new StringBuilder();
+            builder.append("Escuchando en las direcciones {");
+
+            for (final ServerSocketChannel listener : listeners) {
+
+                builder.append(listener.getLocalAddress().toString());
+                builder.append(", ");
+            }
+
+            if (0 < getListeners()) {
+
+                builder.deleteCharAt(builder.length() - 1);
+                builder.deleteCharAt(builder.length() - 1);
+            }
+
+            builder.append("}.");
+            return builder.toString();
+        }
+        catch (final IOException exception) {
+
+            return Message.UNKNOWN_INTERFACES.getMessage();
+        }
+    }
+
+    /**
+     * <p>Método público para cerrar canales de forma
+     * segura. Todas las excepciones son suprimidas, por
+     * lo que se deben tomar recaudos necesarios para
+     * determinar el origen de las posibles fallas.</p>
+     *
+     * @param key
+     *	La clave a cancelar, cuyo canal asociado se cerrará.
+     */
+
+    public static void close(final SelectionKey key) {
+
+        if (key != null) {
+
+            key.cancel();
+            final SelectableChannel channel = key.channel();
+            try {
+
+                if (channel.isOpen()) {
+                    channel.close();
+                }
+            }
+            catch (final IOException spurious) {}
+        }
+    }
+
+    /**
+     * <p>Intenta determinar la dirección IP y puerto al
+     * cual este canal se encuentra asociado. Si no
+     * puede resolver la dirección, genera un mensaje
+     * especial.</p>
+     *
+     * @param key
+     *	La clave para la cual se intentará resolver su dirección.
+     *
+     * @return Una cadena que representa la dirección asociada a
+     *	esta clave, o un mensaje especial indicando que la misma
+     *	no se pudo resolver (porque el canal estaba cerrado).
+     */
+
+    public static String tryToResolveAddress(final SelectionKey key) {
+
+        try {
+
+            final SelectableChannel channel = key.channel();
+            if (channel instanceof SocketChannel) {
+                return ((SocketChannel) channel)
+                        .getRemoteAddress().toString();
+            } else {
+                return ((ServerSocketChannel) channel)
+                        .getLocalAddress().toString();
+            }
+        }
+        catch (IOException
+                | NullPointerException spurious) {}
+        return Message.UNKNOWN_ADDRESS.getMessage();
+    }
+
+    /**
+     * <p>Indica si el canal de la clave está activa para el
+     * evento <b>ACCEPT</b>, es decir, que el canal se encuentra
+     * a disposición de conexiones entrantes, tal cual lo
+     * hace un <i>ServerSocketChannel</i> (listener).</p>
+     *
+     * @param key
+     *	La clave para la cual se determinará su funcionalidad.
+     *
+     * @return Devuelve <i>true</i> si la clave representa un
+     *	socket de escucha (<i>ServerSocketChannel</i>).
+     */
+
+    private boolean isListener(final SelectionKey key) {
+
+        try {
+
+            return 0 != (key.interestOps() & SelectionKey.OP_ACCEPT);
+        }
+        catch (final CancelledKeyException exception) {
+
+            logger.error(
+                    Message.UNEXPECTED_UNPLUG.getMessage(),
+                    tryToResolveAddress(key));
+
+            close(key);
+            return false;
+        }
+    }
+
+    /**
+     * <p>Separa el monitor de inactividad en un thread
+     * secundario, lo que reduce la latencia en el bucle
+     * principal de selección.</p>
+     */
+
+    private void runWatchdog() {
+
+        new Thread(() -> {
+
+            while (monitoring) {
+
+                // Cierra canales inactivos:
+                watchdog.killLazyActivities();
+                try {
+
+                    Thread.sleep(LAZY_INTERVAL_DETECTION);
+                }
+                catch (final InterruptedException spurious) {}
+            }
+        }).start();
+    }
+}

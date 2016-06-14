@@ -9,19 +9,22 @@ import org.slf4j.LoggerFactory;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Stage;
 
 import ar.edu.itba.protos.config.ConfigurationLoader;
 
 public class App {
-    private final static Injector injector = Guice.createInjector(new DIModule());
+    private final static Injector injector = Guice.createInjector(Stage.PRODUCTION, new DIModule());
     private static final Logger logger = LoggerFactory.getLogger(App.class);
     private static final int CONFIG_ERR = -1;
     private static final int SERVER_ERR = -2;
     private static final int MAPPING_ERR = -4;
+    private static final ConfigurationLoader configurator = injector.getInstance(ConfigurationLoader.class);
+
 
     private static void initializeProxyConfig() {
         try {
-            ConfigurationLoader.loadProxyConfig("proxy.xml");
+            configurator.loadProxyConfig("proxy.xml");
         } catch (final JAXBException e) {
             logger.error("Invalid config file", e);
             System.exit(CONFIG_ERR);
@@ -30,7 +33,8 @@ public class App {
 
     private static void initializeUserMapping() {
         try {
-            ConfigurationLoader.loadUserMapping("mapping.xml");
+            configurator.loadUserMapping("mapping.xml");
+            logger.debug("{}", configurator.getUserMapping());
         } catch (final JAXBException e) {
             logger.error("Invalid proxy mapping file", e);
             System.exit(MAPPING_ERR);

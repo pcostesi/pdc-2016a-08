@@ -21,17 +21,23 @@ import ar.edu.itba.protos.transport.support.Message;
  */
 
 public final class ClientAttachment extends Attachment implements Interceptor {
-	private final static Logger logger = LoggerFactory.getLogger(ClientAttachment.class);
+
+	private final static Logger logger
+		= LoggerFactory.getLogger(ClientAttachment.class);
 
 	// El buffer de entrada (lectura):
-	private ByteBuffer inbound = ByteBuffer.allocate(ForwardAttachmentFactory.BUFFER_SIZE);
+	private ByteBuffer inbound
+		= ByteBuffer.allocate(ForwardAttachmentFactory.BUFFER_SIZE);
 
 	// El buffer de salida (escritura):
-	private ByteBuffer outbound = ByteBuffer.allocate(ForwardAttachmentFactory.BUFFER_SIZE);
+	private ByteBuffer outbound
+		= ByteBuffer.allocate(ForwardAttachmentFactory.BUFFER_SIZE);
 
 	public ClientAttachment() {
+
 		// Este es el 'greeting-banner' (client-side):
-		byte[] greetingBanner = "+OK POP-3 Proxy Server (ready).\r\n".getBytes();
+		byte[] greetingBanner
+			= Message.GREETING_BANNER.getMessage().getBytes();
 
 		// Se lo envío al cliente (MUA):
 		if (greetingBanner.length <= outbound.remaining())
@@ -56,20 +62,22 @@ public final class ClientAttachment extends Attachment implements Interceptor {
 	@Override
 	public void onUnplug(Event event) {
 
-		logger.trace("> Client.onUnplug({})", event);
+		logger.trace("Client.onUnplug({})", event);
 
 		// Vacío el buffer 'inbound':
-		inbound.clear();
+		getInboundBuffer().clear();
 
 		// Un mensaje de despedida:
-		inbound.put("(Client) Bye!\n".getBytes());
+		getInboundBuffer().put("(Client) Bye!\n".getBytes());
 
 		// Fuerza el cierre del 'upstream':
 		closeUpstream();
 	}
 
+	// Esta cosa no debería existir:
 	private boolean first = true;
 
+	// El buffer consumido siempre es el 'inbound':
 	public void consume(ByteBuffer buffer) {
 
 		if (first) {
@@ -78,23 +86,22 @@ public final class ClientAttachment extends Attachment implements Interceptor {
 			buffer.limit(buffer.position());
 
 			// El 'attachment' de tipo 'server-side':
-			Attachment attach = new ServerAttachment(downstream, outbound, inbound);
+			Attachment attachment = new ServerAttachment(downstream);
 
 			// El servidor remoto (origin-server):
-			SocketAddress address = new InetSocketAddress("pop.speedy.com.ar", 110);
+			SocketAddress address
+				= new InetSocketAddress("pop.speedy.com.ar", 110);
 
 			// Creo el stream 'server-side':
-			upstream = addStream(address, attach);
+			upstream = addStream(address, attachment);
 
 			if (upstream == null) {
 
 				// No se pudo resolver el 'origin-server':
 				closeDownstream();
-
-				logger.error(Message.CANNOT_FORWARD);
 			}
 
-			// Soló una vez:
+			// Sólo una vez:
 			first = false;
 		}
 	}
