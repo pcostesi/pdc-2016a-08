@@ -42,6 +42,7 @@ public final class AdminAttachment extends Attachment implements Interceptor {
     private int starterPosition = 0;
     private boolean hasQuit = false;
     private final Metrics metrics;
+    private boolean unplugged = false;
 
     @Inject
     public AdminAttachment(final CommandExecutor executor, final AdminProtocolParser parser, final Metrics metrics) {
@@ -75,6 +76,10 @@ public final class AdminAttachment extends Attachment implements Interceptor {
 
     @Override
     public boolean hasOutboundData() {
+        if (unplugged) {
+            closeDownstream();
+            return false;
+        }
         final ByteBuffer outbound = getFirstOutboundBuffer();
 
         final int tempPosition = inboundBuffer.position();
@@ -110,7 +115,11 @@ public final class AdminAttachment extends Attachment implements Interceptor {
 
     @Override
     public void onUnplug(final Event event) {
-        logger.debug("> Admin.onUnplug({})", event);
+        if (event == Event.READ) {
+            unplugged = true;
+        } else {
+            closeDownstream();
+        }
     }
 
     private static ByteBuffer serializeResult(final CommandResult result) {
